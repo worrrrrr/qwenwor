@@ -34,9 +34,11 @@
   let leftOpen = $state(true);
   let rightOpen = $state(true);
 
-  // หน้า auth (login/signup) แสดงแบบลีนๆ ไม่มี Navbar/Sidebar
+  // หน้า auth (login/signup/reset-password) แสดงแบบลีนๆ ไม่มี Navbar/Sidebar
   const isAuthPage = $derived(
-    page.url.pathname.startsWith('/login') || page.url.pathname.startsWith('/signup')
+    page.url.pathname.startsWith('/login') ||
+      page.url.pathname.startsWith('/signup') ||
+      page.url.pathname.startsWith('/auth')
   );
 </script>
 
