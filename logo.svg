@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <defs>
+    <!-- ไล่สีไหลวนรอบอินฟินิตี้ -->
+    <linearGradient id="inf" x1="0" y1="0" x2="1" y2="0" spreadMethod="repeat">
+      <stop offset="0" stop-color="#9d5fd8"/>
+      <stop offset=".25" stop-color="#ef9ad2"/>
+      <stop offset=".5" stop-color="#ffedd0"/>
+      <stop offset=".75" stop-color="#d686da"/>
+      <stop offset="1" stop-color="#9d5fd8"/>
+      <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="1 0" dur="4s" repeatCount="indefinite"/>
+    </linearGradient>
+    <!-- ลำแสงเปลี่ยนสีทอง→ม่วง -->
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffcf8f" stop-opacity="0"/>
+      <stop offset=".12" stop-color="#ffcf8f">
+        <animate attributeName="stop-color" values="#ffcf8f;#f0abfc;#ffcf8f" dur="6s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset=".5" stop-color="#fff6e3">
+        <animate attributeName="stop-color" values="#fff6e3;#ffffff;#fff6e3" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset=".88" stop-color="#ffcf8f">
+        <animate attributeName="stop-color" values="#ffcf8f;#f0abfc;#ffcf8f" dur="6s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="1" stop-color="#ffcf8f" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="core">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".35" stop-color="#ffdfae" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#ffdfae" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="b1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.5"/></filter>
+    <filter id="b2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="b3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="b4" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
+    <path id="lp" pathLength="100" fill="none" d="M230 470 C230 355 385 355 500 470 C615 585 770 585 770 470 C770 355 615 355 500 470 C385 585 230 585 230 470 Z"/>
+    <path id="bp" d="M500 50 C507 300 517 420 527 470 C517 520 507 640 500 950 C493 640 483 520 473 470 C483 420 493 300 500 50 Z"/>
+    <path id="bp2" d="M500 60 C503 320 508 430 513 470 C508 510 503 620 500 940 C497 620 492 510 487 470 C492 430 497 320 500 60 Z"/>
+  </defs>
+
+  <rect width="1000" height="1000" fill="#060606"/>
+
+  <!-- อินฟินิตี้เรืองแสง (หายใจเบา ๆ) -->
+  <use href="#lp" stroke="#7a3ff0" stroke-width="70" opacity=".25" filter="url(#b4)">
+    <animate attributeName="opacity" values=".2;.4;.2" dur="4s" repeatCount="indefinite"/>
+  </use>
+  <use href="#lp" stroke="#c26df0" stroke-width="40" opacity=".5" filter="url(#b3)"/>
+  <use href="#lp" stroke="url(#inf)" stroke-width="22" opacity=".85" filter="url(#b2)"/>
+  <use href="#lp" stroke="url(#inf)" stroke-width="10" filter="url(#b1)"/>
+  <use href="#lp" stroke="#ffffff" stroke-width="3" opacity=".85" filter="url(#b1)"/>
+
+  <!-- พลังงานวิ่งวนตามเส้น -->
+  <use href="#lp" stroke="#ffd9a0" stroke-width="9" stroke-linecap="round" stroke-dasharray="6 94" opacity=".9" filter="url(#b2)">
+    <animate attributeName="stroke-dashoffset" from="0" to="-100" dur="3s" repeatCount="indefinite"/>
+  </use>
+  <use href="#lp" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 90" filter="url(#b1)">
+    <animate attributeName="stroke-dashoffset" from="0" to="-100" dur="3s" begin="-1.5s" repeatCount="indefinite"/>
+  </use>
+
+  <!-- ลำแสงแนวตั้งกระพริบ -->
+  <g>
+    <animate attributeName="opacity" values=".85;1;.85" dur="2.4s" repeatCount="indefinite"/>
+    <use href="#bp" fill="#7a3ff0" opacity=".4" filter="url(#b3)"/>
+    <use href="#bp" fill="url(#beam)" filter="url(#b2)"/>
+    <use href="#bp2" fill="url(#beam)" filter="url(#b1)"/>
+    <use href="#bp2" fill="#fff8ea" opacity=".9"/>
+  </g>
+
+  <!-- แสงจ้ากลาง пульс -->
+  <circle cx="500" cy="470" r="110" fill="url(#core)">
+    <animate attributeName="r" values="95;125;95" dur="2.4s" repeatCount="indefinite"/>
+  </circle>
+  <ellipse cx="500" cy="470" rx="150" ry="16" fill="url(#core)" opacity=".55">
+    <animate attributeName="rx" values="130;175;130" dur="2.4s" repeatCount="indefinite"/>
+  </ellipse>
+</svg>

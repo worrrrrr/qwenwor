@@ -1,0 +1,45 @@
+import { createClient } from '@supabase/supabase-js';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { chromium } from 'file:///C:/Users/worrr/AppData/Local/Temp/pwtest/node_modules/playwright/index.mjs';
+const out = [];
+const log = (m) => out.push(m);
+const env = readFileSync('.env', 'utf8');
+const get = (k) => (env.match(new RegExp('^' + k + '=(.*)$', 'm')) || [])[1] || '';
+const sb = createClient(get('PUBLIC_SUPABASE_URL'), get('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false } });
+const email = 'rep_' + Date.now().toString(36) + '@test.dev';
+const password = 'Test1234!';
+const cu = await sb.auth.admin.createUser({ email, password, email_confirm: true });
+const uid = cu.data.user.id;
+const mk = (title, agentId) => sb.from('agent_chats').insert({ user_id: uid, agent_id: agentId, is_group: false, title }).select('id').single();
+const [ra, rb] = await Promise.all([mk('ห้องA ทดสอบเรียลไทม์', 'god'), mk('ห้องB ทดสอบเรียลไทม์', 'bee')]);
+log('rooms A=' + ra.data.id + ' B=' + rb.data.id);
+try {
+  const browser = await chromium.launch({ executablePath: 'C:/Users/worrr/AppData/Local/ms-playwright/chromium-1223/chrome-win64/chrome.exe' });
+  const page = await browser.newPage();
+  page.on('pageerror', e => out.push('PAGEERROR: ' + e.message));
+  await page.goto('http://localhost:5173/login');
+  await page.locator('input[name=email]').first().fill(email);
+  await page.locator('input[name=password]').fill(password);
+  await page.locator('input[name=password]').press('Enter');
+  await page.waitForURL('**/');
+  await page.goto('http://localhost:5173/chat/god?room=' + ra.data.id);
+  await page.waitForLoadState('networkidle');
+  const aside = () => page.locator('aside').first().innerText();
+  log('sidebar has A: ' + (await aside()).includes('ห้องA ทดสอบเรียลไทม์'));
+  log('sidebar has B: ' + (await aside()).includes('ห้องB ทดสอบเรียลไทม์'));
+  const rc = await mk('ห้องC เกิดใหม่ระหว่างคุย', 'brian');
+  log('room C inserted: ' + rc.data.id);
+  await page.locator('textarea').fill('สวัสดีห้องA');
+  await page.locator('textarea').press('Enter');
+  await page.waitForTimeout(8000);
+  const sidebarText = await aside();
+  log('url unchanged: ' + page.url());
+  log('sidebar has C (REALTIME): ' + sidebarText.includes('ห้องC เกิดใหม่ระหว่างคุย'));
+  log('sidebar has A: ' + sidebarText.includes('ห้องA ทดสอบเรียลไทม์'));
+  log('sidebar has B: ' + sidebarText.includes('ห้องB ทดสอบเรียลไทม์'));
+  await browser.close();
+} catch (e) { out.push('SCRIPT ERROR: ' + (e?.stack || e)); }
+writeFileSync('C:/Users/worrr/AppData/Local/Temp/pwtest/result.txt', out.join('\n'));
+const { data: users } = await sb.auth.admin.listUsers();
+const u = (users?.users ?? []).find(x => x.email === email);
+if (u) { const { data: chats } = await sb.from('agent_chats').select('id').eq('user_id', u.id); for (const c of chats ?? []) await sb.from('agent_chats').delete().eq('id', c.id); await sb.auth.admin.deleteUser(u.id); }

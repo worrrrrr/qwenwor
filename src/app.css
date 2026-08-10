@@ -1,1 +1,156 @@
 @import 'tailwindcss';
+
+/* ============================================================
+   Agentic Knowledge Workspace — ธีมกลาง (รวม CSS ไว้ที่เดียว)
+   ใช้ CSS ธรรมดา + ตัวแปรธีม Tailwind v4 (var(--color-*) ฯลฯ)
+   ไม่ใช้ @apply → ไม่มี warning จากตัวตรวจ CSS ของ VS Code
+   แก้ตรงนี้ = เปลี่ยนทั้งแอป
+   ============================================================ */
+
+@layer base {
+	body {
+		font-family:
+			'Prompt', 'Sarabun', 'Noto Sans Thai', ui-sans-serif, system-ui,
+			-apple-system, 'Segoe UI', Roboto, sans-serif;
+		background-color: var(--color-slate-100);
+		color: var(--color-gray-900);
+		-webkit-font-smoothing: antialiased;
+	}
+}
+
+@layer components {
+	/* ---------- การ์ด ---------- */
+	.card {
+		background-color: var(--color-white);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-md);
+		transition: box-shadow 0.15s ease;
+	}
+	.card:hover {
+		box-shadow: var(--shadow-lg);
+	}
+	.card-accent-green {
+		border-left: 4px solid var(--color-green-500);
+	}
+	.card-accent-orange {
+		border-left: 4px solid var(--color-orange-500);
+	}
+	.card-accent-purple {
+		border-left: 4px solid var(--color-purple-500);
+	}
+	.card-accent-red {
+		border-left: 4px solid var(--color-red-500);
+	}
+
+	/* ---------- แผง / กล่อง ---------- */
+	.panel {
+		background-color: var(--color-white);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-md);
+		padding: 1.5rem; /* p-6 */
+		margin-bottom: 2rem; /* mb-8 */
+	}
+	.box {
+		background-color: var(--color-white);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-md);
+		padding: 1rem; /* p-4 */
+	}
+
+	/* ---------- ปุ่ม ---------- */
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-md);
+		font-size: var(--text-sm);
+		font-weight: 500;
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease;
+		cursor: pointer;
+	}
+	.btn-green {
+		padding: 0.5rem 1rem; /* px-4 py-2 */
+		background-color: var(--color-green-600);
+		color: var(--color-white);
+	}
+	.btn-green:hover {
+		background-color: var(--color-green-700);
+	}
+	.btn-orange {
+		padding: 0.5rem 1rem;
+		background-color: var(--color-orange-600);
+		color: var(--color-white);
+	}
+	.btn-orange:hover {
+		background-color: var(--color-orange-700);
+	}
+	.btn-purple {
+		padding: 0.5rem 1rem;
+		background-color: var(--color-purple-600);
+		color: var(--color-white);
+	}
+	.btn-purple:hover {
+		background-color: var(--color-purple-700);
+	}
+	.btn-blue {
+		padding: 0.5rem 1rem;
+		background-color: var(--color-blue-600);
+		color: var(--color-white);
+	}
+	.btn-blue:hover {
+		background-color: var(--color-blue-700);
+	}
+	.btn-gray {
+		padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
+		background-color: var(--color-gray-200);
+		color: var(--color-gray-700);
+	}
+	.btn-gray:hover {
+		background-color: var(--color-gray-300);
+	}
+
+	/* ---------- อินพุต ---------- */
+	.input {
+		width: 100%;
+		border: 1px solid var(--color-gray-300);
+		border-radius: var(--radius-md);
+		padding: 0.5rem 0.75rem; /* px-3 py-2 */
+		font-size: var(--text-sm);
+		outline: none;
+	}
+	.input:focus,
+	.input-green:focus {
+		box-shadow: 0 0 0 2px var(--color-green-500);
+	}
+	.input-orange:focus {
+		box-shadow: 0 0 0 2px var(--color-orange-500);
+	}
+	.input-purple:focus {
+		box-shadow: 0 0 0 2px var(--color-purple-500);
+	}
+	.input-red:focus {
+		box-shadow: 0 0 0 2px var(--color-red-500);
+	}
+
+	/* ---------- ป้ายสถานะ ---------- */
+	.badge {
+		padding: 0.25rem 0.5rem; /* px-2 py-1 */
+		font-size: var(--text-xs);
+		border-radius: 9999px; /* rounded-full */
+	}
+
+	/* ---------- หัวข้อหน้า ---------- */
+	.page-title {
+		font-size: var(--text-3xl);
+		font-weight: 700;
+		color: var(--color-gray-900);
+		margin-bottom: 0.5rem; /* mb-2 */
+	}
+	.page-subtitle {
+		color: var(--color-gray-600);
+	}
+}
+
+

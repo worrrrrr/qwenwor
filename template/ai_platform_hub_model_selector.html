@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI OmniStudio - Multi-Model Hub & Workspace UI</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            notebook: '#10B981',
+                            perplexity: '#06B6D4',
+                            claude: '#F59E0B',
+                            deepseek: '#3B82F6',
+                            gemini: '#A855F7',
+                            spark: '#EC4899',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-light {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.3);
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.6);
+        }
+
+        .card-hover-effect {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card-hover-effect:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .animate-pulse-glow {
+            animation: pulseGlow 6s infinite ease-in-out;
+        }
+
+        /* Audio Player Waves Simulation */
+        .wave-bar {
+            width: 3px;
+            background-color: #10B981;
+            border-radius: 3px;
+            animation: wave 1.2s ease-in-out infinite alternate;
+        }
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes wave {
+            0% { height: 6px; }
+            100% { height: 24px; }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none bg-slate-950 text-slate-100 transition-colors duration-300" id="appBody">
+
+    <!-- Top Global Header -->
+    <header class="h-16 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 z-40">
+        
+        <!-- Left Brand & View Controls -->
+        <div class="flex items-center space-x-3 sm:space-x-4">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="app.switchLayoutMode('dashboard')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-brain text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm sm:text-base tracking-tight flex items-center gap-2 text-slate-100">
+                        AI OmniStudio <span class="bg-indigo-500/20 text-indigo-400 text-[10px] font-mono px-2 py-0.5 rounded-full border border-indigo-500/30">Hub v3.5</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400 hidden md:block">Unified Multi-Model Ecosystem & AI Selector</p>
+                </div>
+            </div>
+
+            <!-- UI Layout Selector Tabs -->
+            <div class="hidden lg:flex items-center bg-slate-950 border border-slate-800 p-1 rounded-xl text-xs space-x-1">
+                <button onclick="app.switchLayoutMode('dashboard')" id="modeBtnDashboard" class="px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-white bg-indigo-600 shadow">
+                    <i class="fa-solid fa-grid-2 text-[11px]"></i> Bento Grid
+                </button>
+                <button onclick="app.switchLayoutMode('console')" id="modeBtnConsole" class="px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-terminal text-[11px]"></i> Studio Console
+                </button>
+                <button onclick="app.switchLayoutMode('split')" id="modeBtnSplit" class="px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-columns text-[11px]"></i> Split Parallel View
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Global Search Box -->
+        <div class="hidden md:flex items-center bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 w-72 lg:w-96 focus-within:border-indigo-500 transition">
+            <i class="fa-solid fa-magnifying-glass text-slate-500 text-xs mr-2"></i>
+            <input type="text" id="globalSearchInput" oninput="app.filterModels(this.value)" placeholder="ค้นหา AI, ความสามารถ, หรือโมเดล..." class="bg-transparent border-none text-xs text-slate-200 focus:outline-none w-full placeholder-slate-500">
+            <span class="text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded font-mono">⌘K</span>
+        </div>
+
+        <!-- Right Header Action Tools -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            
+            <!-- Quick UI Style Picker Dropdown -->
+            <div class="relative">
+                <button onclick="app.toggleThemeDropdown()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-palette text-indigo-400"></i>
+                    <span class="hidden sm:inline">สไตล์ UI</span>
+                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                </button>
+                
+                <div id="themeDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 text-xs">
+                    <button onclick="app.setThemeStyle('cyber')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center justify-between text-slate-200">
+                        <span><i class="fa-solid fa-moon text-purple-400 mr-2"></i> Cyber Dark Glass</span>
+                        <i class="fa-solid fa-check text-indigo-400 theme-check" id="checkCyber"></i>
+                    </button>
+                    <button onclick="app.setThemeStyle('slate')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center justify-between text-slate-200">
+                        <span><i class="fa-solid fa-circle-half-stroke text-blue-400 mr-2"></i> Clean Slate</span>
+                        <i class="fa-solid fa-check text-indigo-400 hidden theme-check" id="checkSlate"></i>
+                    </button>
+                    <button onclick="app.setThemeStyle('light')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center justify-between text-slate-200">
+                        <span><i class="fa-solid fa-sun text-amber-400 mr-2"></i> Minimal Light</span>
+                        <i class="fa-solid fa-check text-indigo-400 hidden theme-check" id="checkLight"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Prompt Library Button -->
+            <button onclick="app.openPromptLibraryModal()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span class="hidden sm:inline">คลัง Prompt</span>
+            </button>
+
+            <!-- Settings Modal Button -->
+            <button onclick="app.openSettingsModal()" class="p-2 text-slate-400 hover:text-slate-200 bg-slate-800/60 hover:bg-slate-800 border border-slate-800 rounded-xl transition" title="ตั้งค่าระบบ & API Key">
+                <i class="fa-solid fa-gear text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Body Workspace -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Left Navigation Sidebar -->
+        <aside class="w-16 border-r border-slate-800/80 bg-slate-900/60 flex flex-col items-center py-4 space-y-3 shrink-0 z-30">
+            
+            <button onclick="app.switchLayoutMode('dashboard')" id="navSideDashboard" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white bg-slate-800/80 transition relative group" title="หน้าหลัก Dashboard">
+                <i class="fa-solid fa-border-all text-base"></i>
+                <span class="absolute left-14 bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-lg">หน้าหลัก Dashboard</span>
+            </button>
+
+            <button onclick="app.switchLayoutMode('split')" id="navSideSplit" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition relative group" title="เปรียบเทียบคำตอบ (Split View)">
+                <i class="fa-solid fa-columns text-base"></i>
+                <span class="absolute left-14 bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-lg">โหมดเปรียบเทียบ (Split View)</span>
+            </button>
+
+            <div class="w-8 h-[1px] bg-slate-800/80 my-1"></div>
+
+            <!-- Model Fast Icons -->
+            <button onclick="app.openConsoleWithModel('notebooklm')" id="navBtn-notebooklm" class="w-10 h-10 rounded-xl flex items-center justify-center transition relative group">
+                <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                </div>
+                <span class="absolute left-14 bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-lg">NotebookLM</span>
+            </button>
+
+            <button onclick="app.openConsoleWithModel('perplexity')" id="navBtn-perplexity" class="w-10 h-10 rounded-xl flex items-center justify-center transition relative group">
+                <div class="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-globe"></i>
+                </div>
+                <span class="absolute left-14 bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-lg">Perplexity AI</span>
+            </button>
+
+            <button onclick="app.openConsoleWithModel('claude')" id="navBtn-claude" class="w-10 h-10 rounded-xl flex items-center justify-center transition relative group">
+                <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-feather-pointed"></i>
+                </div>
+                <span class="absolute left-14 bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-lg">Claude 3.5</span>
+            </button>
+
+            <button onclick="app.openConsoleWithModel('deepseek')" id="navBtn-deepseek" class="w-10 h-10 rounded-xl flex items-center justify-center transition relative group">
+                <div class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <span class="absolute left-14 bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-lg">DeepSeek R1</span>
+            </button>
+
+            <button onclick="app.openConsoleWithModel('gemini')" id="navBtn-gemini" class="w-10 h-10 rounded-xl flex items-center justify-center transition relative group">
+                <div class="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <span class="absolute left-14 bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-lg">Gemini 3 Pro</span>
+            </button>
+
+            <button onclick="app.openConsoleWithModel('spark')" id="navBtn-spark" class="w-10 h-10 rounded-xl flex items-center justify-center transition relative group">
+                <div class="w-7 h-7 rounded-lg bg-pink-500/20 text-pink-400 border border-pink-500/30 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <span class="absolute left-14 bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 pointer-events-none shadow-lg">Musk Spark (Grok)</span>
+            </button>
+        </aside>
+
+        <!-- VIEW 1: Bento Grid Dashboard -->
+        <main id="dashboardView" class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+            
+            <!-- Hero Banner -->
+            <div class="relative rounded-3xl bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-950 p-6 sm:p-8 border border-indigo-500/20 overflow-hidden shadow-2xl">
+                <div class="absolute -right-10 -bottom-10 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
+                <div class="absolute right-40 -top-10 w-60 h-60 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 max-w-3xl">
+                    <div class="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 px-3 py-1 rounded-full text-indigo-300 text-xs font-semibold mb-3">
+                        <i class="fa-solid fa-sparkles text-amber-400"></i> AI Workspace Hub 2026
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight mb-2">
+                        เลือก AI Engine ที่ตอบโจทย์การทำงานของคุณ
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6">
+                        รวบรวม AI ระดับท็อปของโลกไว้อย่างสมบูรณ์แบบ ทั้งงานสรุปวิจัย, ค้นหาเว็บสด, คิดวิเคราะห์เชิงลึก, เขียนโค้ด UI และเชื่อมต่อโซเชียลกระแสสด
+                    </p>
+
+                    <!-- Category Filter Buttons -->
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <button onclick="app.filterCategory('all')" class="cat-btn px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-medium transition" data-cat="all">ทั้งหมด (6)</button>
+                        <button onclick="app.filterCategory('research')" class="cat-btn px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" data-cat="research"><i class="fa-solid fa-magnifying-glass text-cyan-400 mr-1.5"></i>งานวิจัย & ค้นหา</button>
+                        <button onclick="app.filterCategory('code')" class="cat-btn px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" data-cat="code"><i class="fa-solid fa-code text-blue-400 mr-1.5"></i>วิเคราะห์ & เขียนโค้ด</button>
+                        <button onclick="app.filterCategory('creative')" class="cat-btn px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" data-cat="creative"><i class="fa-solid fa-pen-nib text-amber-400 mr-1.5"></i>งานเขียน & ภาษา</button>
+                        <button onclick="app.filterCategory('realtime')" class="cat-btn px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" data-cat="realtime"><i class="fa-solid fa-bolt text-pink-400 mr-1.5"></i>ข้อมูลเรียลไทม์ & X Feed</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bento Model Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="modelCardGrid">
+                
+                <!-- Card 1: NotebookLM -->
+                <div class="glass-dark rounded-2xl p-6 flex flex-col justify-between border-emerald-500/20 card-hover-effect relative group" data-category="research">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                                    <i class="fa-solid fa-book-bookmark text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-100 text-base">NotebookLM</h3>
+                                    <p class="text-xs text-emerald-400 font-medium">Google Labs</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono">Document AI</span>
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            AI ผู้ช่วยสรุปเอกสาร อัปโหลด PDF, Docs หรือลิงก์ วิเคราะห์ข้อมูลพร้อมสร้าง Audio Overview Podcast การสนทนาคู่เสียงเสมือนจริง
+                        </p>
+
+                        <div class="space-y-2 pt-1">
+                            <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ไฮไลต์การทำงาน:</div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800/50 text-[11px]">Source Grounding</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Audio Overview Podcast</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Citation Indexing</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400"><i class="fa-solid fa-file-pdf text-emerald-400 mr-1"></i> รองรับ 500k+ คำ</span>
+                        <button onclick="app.openConsoleWithModel('notebooklm')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-emerald-600/20 flex items-center gap-1.5">
+                            เข้าใช้งาน Studio <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 2: Perplexity -->
+                <div class="glass-dark rounded-2xl p-6 flex flex-col justify-between border-cyan-500/20 card-hover-effect relative group" data-category="research realtime">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+                                    <i class="fa-solid fa-globe text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-100 text-base">Perplexity AI</h3>
+                                    <p class="text-xs text-cyan-400 font-medium">Perplexity Inc.</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] font-mono">Live Web Search</span>
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            ระบบค้นหาข้อมูลและวิจัยสดบนเว็บเรียลไทม์ พร้อม Pro Search & Deep Research สกัดคำตอบแม่นยำ อ้างอิงลิงก์แหล่งข่าวสารจริง
+                        </p>
+
+                        <div class="space-y-2 pt-1">
+                            <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ไฮไลต์การทำงาน:</div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="px-2 py-0.5 rounded-md bg-cyan-950/80 text-cyan-300 border border-cyan-800/50 text-[11px]">Real-time Citations</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Pro Research Mode</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Live Web Grounding</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400"><i class="fa-solid fa-wifi text-cyan-400 mr-1"></i> เชื่อมต่อเว็บสด 2026</span>
+                        <button onclick="app.openConsoleWithModel('perplexity')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-cyan-600/20 flex items-center gap-1.5">
+                            เข้าใช้งาน Studio <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 3: Claude 3.5 Sonnet -->
+                <div class="glass-dark rounded-2xl p-6 flex flex-col justify-between border-amber-500/20 card-hover-effect relative group" data-category="creative code">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-700 flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+                                    <i class="fa-solid fa-feather-pointed text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-100 text-base">Claude 3.5 Sonnet</h3>
+                                    <p class="text-xs text-amber-400 font-medium">Anthropic</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-mono">Writing & UI</span>
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            ที่สุดแห่งความละเมียดด้านภาษาการเขียน สรุปบทความ นวนิยาย พร้อมความสามารถสร้างและพรีวิว UI Component ใน Artifacts Pane
+                        </p>
+
+                        <div class="space-y-2 pt-1">
+                            <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ไฮไลต์การทำงาน:</div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-300 border border-amber-800/50 text-[11px]">Artifacts Live Preview</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Nuanced Writing</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">200k Context</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400"><i class="fa-solid fa-code text-amber-400 mr-1"></i> Artifacts Active</span>
+                        <button onclick="app.openConsoleWithModel('claude')" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-amber-600/20 flex items-center gap-1.5">
+                            เข้าใช้งาน Studio <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 4: DeepSeek R1 / V3 -->
+                <div class="glass-dark rounded-2xl p-6 flex flex-col justify-between border-blue-500/20 card-hover-effect relative group" data-category="code research">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                    <i class="fa-solid fa-microchip text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-100 text-base">DeepSeek R1 / V3</h3>
+                                    <p class="text-xs text-blue-400 font-medium">DeepSeek AI</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-mono">Reasoning Logic</span>
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            โมเดล Open-Weight โดดเด่นเรื่อง Chain-of-Thought Reasoning แสดงแผนผังขั้นตอนความคิดแก้โจทย์คณิตศาสตร์ สถิติ และเขียนโค้ด
+                        </p>
+
+                        <div class="space-y-2 pt-1">
+                            <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ไฮไลต์การทำงาน:</div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="px-2 py-0.5 rounded-md bg-blue-950/80 text-blue-300 border border-blue-800/50 text-[11px]">Chain-of-Thought Tree</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Math & Algorithm</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Open Weights</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400"><i class="fa-solid fa-brain text-blue-400 mr-1"></i> R1 Deep Thinker</span>
+                        <button onclick="app.openConsoleWithModel('deepseek')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-blue-600/20 flex items-center gap-1.5">
+                            เข้าใช้งาน Studio <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 5: Gemini 3 Pro -->
+                <div class="glass-dark rounded-2xl p-6 flex flex-col justify-between border-purple-500/20 card-hover-effect relative group" data-category="creative research code">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 via-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-100 text-base">Gemini 3 Pro / Flash</h3>
+                                    <p class="text-xs text-purple-400 font-medium">Google DeepMind</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[10px] font-mono">Multimodal 2M</span>
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            โมเดล Native Multimodal ประสิทธิภาพสูง ประมวลผลข้อความ, รูปภาพ, เสียง และวิดีโอ บริบทขนาดมหึมา 2,000,000 Tokens
+                        </p>
+
+                        <div class="space-y-2 pt-1">
+                            <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ไฮไลต์การทำงาน:</div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="px-2 py-0.5 rounded-md bg-purple-950/80 text-purple-300 border border-purple-800/50 text-[11px]">2,000,000 Token Window</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Live API Active</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Image/Audio/PDF</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400"><i class="fa-solid fa-bolt text-purple-400 mr-1"></i> Live API Ready</span>
+                        <button onclick="app.openConsoleWithModel('gemini')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-purple-600/20 flex items-center gap-1.5">
+                            เข้าใช้งาน Studio <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 6: Musk Spark (Grok) -->
+                <div class="glass-dark rounded-2xl p-6 flex flex-col justify-between border-pink-500/20 card-hover-effect relative group" data-category="realtime creative">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-600 via-rose-600 to-slate-900 flex items-center justify-center text-white shadow-lg shadow-pink-500/20">
+                                    <i class="fa-solid fa-bolt text-xl font-bold"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-100 text-base">Musk Spark (Grok)</h3>
+                                    <p class="text-xs text-pink-400 font-medium">xAI</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/30 text-[10px] font-mono">X Live Stream</span>
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            AI ดึงข้อมูลกระแสสดจาก X (Twitter) บุคลิกตรงไปตรงมา ค้นหาเทรนด์ไวรัส ข่าวร้อนสังคมอย่างเรียลไทม์
+                        </p>
+
+                        <div class="space-y-2 pt-1">
+                            <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ไฮไลต์การทำงาน:</div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="px-2 py-0.5 rounded-md bg-pink-950/80 text-pink-300 border border-pink-800/50 text-[11px]">X Real-time Data Stream</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Trend Tracker</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">Unfiltered Insights</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400"><i class="fa-brands fa-x-twitter text-pink-400 mr-1"></i> Live X Ticker</span>
+                        <button onclick="app.openConsoleWithModel('spark')" class="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-pink-600/20 flex items-center gap-1.5">
+                            เข้าใช้งาน Studio <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- VIEW 2: Full Interactive Studio Console -->
+        <main id="consoleView" class="hidden flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+            
+            <!-- Console Model Header Bar -->
+            <div id="consoleHeader" class="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <button onclick="app.switchLayoutMode('dashboard')" class="text-slate-400 hover:text-white text-xs bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chevron-left text-[10px]"></i> Dashboard
+                    </button>
+                    <div class="h-4 w-[1px] bg-slate-800"></div>
+                    <div class="flex items-center space-x-2.5">
+                        <div id="activeModelIcon" class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs"></div>
+                        <div>
+                            <h2 id="activeModelTitle" class="font-bold text-xs text-slate-100 flex items-center gap-2"></h2>
+                            <p id="activeModelSub" class="text-[10px] text-slate-400"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model-Specific Tools & Gemini API Feature Controls -->
+                <div class="flex items-center space-x-2" id="modelCustomControls">
+                    <label class="flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-xl text-[11px] text-slate-300 cursor-pointer hover:border-indigo-500 transition" title="เปิด/ปิด การค้นหาเว็บสดด้วย Google Search Grounding">
+                        <input type="checkbox" id="searchGroundingToggle" class="accent-indigo-500 rounded">
+                        <span><i class="fa-solid fa-globe text-cyan-400"></i> ค้นหาเว็บสด (Grounding)</span>
+                    </label>
+                    
+                    <button onclick="app.generateAudioOverviewForCurrent()" class="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-[11px] transition flex items-center gap-1" title="สร้าง Podcast เสียงบรรยายด้วย Gemini TTS">
+                        <i class="fa-solid fa-file-audio"></i> <span>สร้าง Podcast เสียง</span>
+                    </button>
+
+                    <button onclick="app.generateImagen4ForPrompt()" class="px-2.5 py-1 bg-pink-600/20 hover:bg-pink-600/30 text-pink-300 border border-pink-500/30 rounded-xl text-[11px] transition flex items-center gap-1" title="สร้างรูปภาพด้วย Imagen 4.0">
+                        <i class="fa-solid fa-image"></i> <span>สร้างภาพ Imagen</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat & Studio Split Body Area -->
+            <div class="flex-1 flex overflow-hidden">
+                
+                <!-- Chat Window -->
+                <div class="flex-1 flex flex-col overflow-hidden relative">
+                    <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4" id="chatStreamContainer">
+                        
+                        <!-- Welcome Splash Card -->
+                        <div id="welcomeMessageBlock" class="max-w-2xl mx-auto text-center py-10 space-y-3">
+                            <div id="welcomeModelBadge" class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-xl"></div>
+                            <h3 id="welcomeModelTitle" class="text-lg font-bold text-slate-100"></h3>
+                            <p id="welcomeModelDesc" class="text-xs text-slate-400 leading-relaxed max-w-md mx-auto"></p>
+                            
+                            <!-- Prompt Suggestions -->
+                            <div class="pt-4">
+                                <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">ลองกดเลือกคำสั่งตัวอย่าง:</div>
+                                <div class="flex flex-wrap justify-center gap-2" id="promptSuggestionsList"></div>
+                            </div>
+                        </div>
+
+                        <!-- Messages Stream Container -->
+                        <div id="messagesList" class="max-w-4xl mx-auto space-y-4"></div>
+                    </div>
+
+                    <!-- Bottom Input Controls -->
+                    <div class="p-4 bg-slate-900/90 border-t border-slate-800 shrink-0">
+                        <div class="max-w-4xl mx-auto space-y-2">
+                            
+                            <!-- NotebookLM Context Bar -->
+                            <div id="contextBar" class="hidden flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+                                <span class="text-[10px] text-emerald-400 font-mono"><i class="fa-solid fa-paperclip"></i> คลังบริบทเอกสาร:</span>
+                                <div id="contextBadgesList" class="flex gap-1.5"></div>
+                                <button onclick="app.addMockSource()" class="px-2 py-0.5 rounded border border-dashed border-slate-700 hover:border-emerald-500 text-[10px] text-slate-400 hover:text-emerald-300 transition">
+                                    + เพิ่มไฟล์ PDF/Doc
+                                </button>
+                            </div>
+
+                            <!-- Text Area Input Box -->
+                            <div class="relative bg-slate-950 border border-slate-800 rounded-2xl p-2 focus-within:border-indigo-500 transition shadow-inner">
+                                <div id="activeRoleBadgeBar" class="hidden flex items-center justify-between bg-indigo-950/60 border border-indigo-500/30 rounded-xl px-3 py-1 mb-2 text-xs">
+                                    <div class="flex items-center gap-1.5 text-indigo-300">
+                                        <i class="fa-solid fa-user-gear text-[10px]"></i>
+                                        <span class="font-medium">บทบาทปัจจุบัน:</span>
+                                        <span id="activeRoleNameDisplay" class="font-bold text-white"></span>
+                                    </div>
+                                    <button onclick="app.clearActiveRole()" class="text-slate-400 hover:text-red-400 text-[11px]" title="ยกเลิกบทบาทนี้">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <textarea id="promptInput" rows="2" placeholder="พิมพ์คำสั่ง หรือถามคำถามที่นี่..." class="w-full bg-transparent text-xs text-slate-100 placeholder-slate-500 focus:outline-none p-2 resize-none custom-scrollbar" onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); app.submitPrompt(); }"></textarea>
+                                
+                                <div class="flex items-center justify-between pt-1 border-t border-slate-900 px-2">
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="app.openPromptLibraryModal()" class="text-[11px] text-slate-400 hover:text-indigo-400 bg-slate-900 hover:bg-slate-800 px-2.5 py-1 rounded-md transition flex items-center gap-1">
+                                            <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> คลัง Prompt
+                                        </button>
+                                        <button onclick="app.openRoleModal()" class="text-[11px] text-slate-400 hover:text-indigo-400 bg-slate-900 hover:bg-slate-800 px-2.5 py-1 rounded-md transition flex items-center gap-1">
+                                            <i class="fa-solid fa-user-gear text-[10px]"></i> กำหนดบทบาท AI
+                                        </button>
+                                    </div>
+
+                                    <button onclick="app.submitPrompt()" id="sendBtn" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5">
+                                        <span>ส่งคำสั่ง</span>
+                                        <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side Panel (Claude Artifacts / NotebookLM Audio / DeepSeek Tree) -->
+                <div id="sideToolPane" class="hidden w-96 border-l border-slate-800 bg-slate-900/60 flex flex-col p-4 space-y-4 overflow-y-auto custom-scrollbar">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <h3 id="sidePaneTitle" class="font-bold text-xs text-slate-200 flex items-center gap-2"></h3>
+                        <button onclick="app.closeSideToolPane()" class="text-slate-400 hover:text-white text-xs"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div id="sidePaneContent" class="space-y-3"></div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- VIEW 3: Multi-Model Split Parallel View -->
+        <main id="splitView" class="hidden flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+            
+            <div class="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <button onclick="app.switchLayoutMode('dashboard')" class="text-slate-400 hover:text-white text-xs bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 transition">
+                        <i class="fa-solid fa-chevron-left text-[10px] mr-1"></i> Dashboard
+                    </button>
+                    <h2 class="font-bold text-xs text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-columns text-indigo-400"></i> โหมดเปรียบเทียบคำตอบหลายโมเดลพร้อมกัน (Split Multi-Pane)
+                    </h2>
+                </div>
+
+                <div class="flex items-center space-x-2 text-xs">
+                    <span class="text-slate-400">เลือกโมเดลที่จะเปรียบเทียบ:</span>
+                    <button onclick="app.toggleSplitModel('notebooklm')" id="splitToggle-notebooklm" class="px-2.5 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 text-[11px] bg-emerald-950/50">NotebookLM</button>
+                    <button onclick="app.toggleSplitModel('perplexity')" id="splitToggle-perplexity" class="px-2.5 py-1 rounded-lg border border-cyan-500/40 text-cyan-300 text-[11px] bg-cyan-950/50">Perplexity</button>
+                    <button onclick="app.toggleSplitModel('claude')" id="splitToggle-claude" class="px-2.5 py-1 rounded-lg border border-amber-500/40 text-amber-300 text-[11px] bg-amber-950/50">Claude</button>
+                    <button onclick="app.toggleSplitModel('deepseek')" id="splitToggle-deepseek" class="px-2.5 py-1 rounded-lg border border-blue-500/40 text-blue-300 text-[11px] bg-blue-950/50">DeepSeek</button>
+                    <button onclick="app.toggleSplitModel('gemini')" id="splitToggle-gemini" class="px-2.5 py-1 rounded-lg border border-purple-500/40 text-purple-300 text-[11px] bg-purple-950/50">Gemini</button>
+                </div>
+            </div>
+
+            <!-- Global Prompt Bar for Split View -->
+            <div class="p-4 border-b border-slate-800 bg-slate-900/40 shrink-0">
+                <div class="max-w-4xl mx-auto flex gap-2">
+                    <input type="text" id="splitPromptInput" placeholder="พิมพ์โจทย์เดียวกันเพื่อรันคำตอบพร้อมกันทุก AI..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                    <button onclick="app.runSplitComparison()" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/25 transition flex items-center gap-2 shrink-0">
+                        <i class="fa-solid fa-bolt"></i> รันเปรียบเทียบ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Parallel Columns Workspace -->
+            <div class="flex-1 overflow-x-auto custom-scrollbar p-4">
+                <div class="h-full flex gap-4 min-w-max" id="splitPanesGrid">
+                    <!-- Dynamic Split Columns rendered here -->
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Modal: Prompt Library -->
+    <div id="promptLibraryModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> คลัง Prompt คุณภาพ
+                    </h3>
+                    <span id="promptCountBadge" class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2 py-0.5 rounded-full border border-indigo-500/30 font-mono">0 รายการ</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="app.openPromptFormModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus text-[10px]"></i> สร้าง Prompt ใหม่
+                    </button>
+                    <button onclick="app.closePromptLibraryModal()" class="text-slate-400 hover:text-slate-200 text-base p-1"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- Filter and Search Bar inside Modal -->
+            <div class="flex flex-col sm:flex-row gap-2">
+                <div class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass text-slate-500 text-xs"></i>
+                    <input type="text" id="promptSearchInput" oninput="app.renderPromptLibraryModal()" placeholder="ค้นหาตามชื่อหรือเนื้อหา Prompt..." class="bg-transparent border-none text-xs text-slate-200 focus:outline-none w-full">
+                </div>
+                <select id="promptFilterTarget" onchange="app.renderPromptLibraryModal()" class="bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-1.5 focus:outline-none">
+                    <option value="all">ทุกโมเดล AI</option>
+                    <option value="notebooklm">NotebookLM</option>
+                    <option value="perplexity">Perplexity</option>
+                    <option value="claude">Claude</option>
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="spark">Musk Spark</option>
+                </select>
+            </div>
+
+            <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-2" id="promptLibraryContainer">
+                <!-- Prompt Items injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Prompt Form -->
+    <div id="promptFormModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="promptFormTitle" class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-400"></i> สร้าง / แก้ไข Prompt
+                </h3>
+                <button onclick="app.closePromptFormModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <input type="hidden" id="editPromptId">
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">หัวข้อ Prompt *</label>
+                    <input type="text" id="formPromptTitle" placeholder="เช่น สรุปรายงาน PDF, ออกแบบ UI Component..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">โมเดลเป้าหมาย</label>
+                    <select id="formPromptTarget" class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-100 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500">
+                        <option value="notebooklm">NotebookLM</option>
+                        <option value="perplexity">Perplexity AI</option>
+                        <option value="claude">Claude 3.5 Sonnet</option>
+                        <option value="deepseek">DeepSeek R1 / V3</option>
+                        <option value="gemini">Gemini 3 Pro / Flash</option>
+                        <option value="spark">Musk Spark (Grok)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">ข้อความ Prompt *</label>
+                    <textarea id="formPromptText" rows="4" placeholder="ระบุข้อความคำสั่งรายละเอียด..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 custom-scrollbar"></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <button onclick="app.closePromptFormModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+                    ยกเลิก
+                </button>
+                <button onclick="app.savePromptForm()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition">
+                    บันทึก Prompt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: System Role Manager -->
+    <div id="roleModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-user-gear text-indigo-400"></i> จัดการบทบาท AI (System Roles)
+                    </h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="app.openRoleFormModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus text-[10px]"></i> เพิ่มบทบาทใหม่
+                    </button>
+                    <button onclick="app.closeRoleModal()" class="text-slate-400 hover:text-slate-200 text-base p-1"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400">เลือกลบทบาทที่จะให้ AI แสดงพฤติกรรมหรือข้อกำหนดเฉพาะทาง โดยคำสั่งบทบาทจะถูกแนบไปกับพรอมต์ของคุณโดยอัตโนมัติ</p>
+
+            <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-2" id="rolesContainer">
+                <!-- Roles injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Role Form -->
+    <div id="roleFormModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="roleFormTitle" class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-user-pen text-indigo-400"></i> เพิ่ม / แก้ไขบทบาท AI
+                </h3>
+                <button onclick="app.closeRoleFormModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <input type="hidden" id="editRoleId">
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">ชื่อบทบาท *</label>
+                    <input type="text" id="formRoleName" placeholder="เช่น ผู้เชี่ยวชาญภาษา Python, นักการตลาดดิจิทัล..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">ไอคอนบทบาท (FontAwesome)</label>
+                    <select id="formRoleIcon" class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-100 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500">
+                        <option value="fa-user-ninja">🥷 ผู้เชี่ยวชาญเฉพาะทาง (Ninja)</option>
+                        <option value="fa-code">💻 โปรแกรมเมอร์ / Developer</option>
+                        <option value="fa-graduation-cap">🎓 อาจารย์ / Tutor</option>
+                        <option value="fa-bullhorn">📢 นักการตลาด / Copywriter</option>
+                        <option value="fa-microscope">🔬 นักวิจัย / Data Analyst</option>
+                        <option value="fa-pen-nib">✍️ นักเขียนบทความ / Editor</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">คำสั่งบทบาท (System Instruction) *</label>
+                    <textarea id="formRoleInstruction" rows="4" placeholder="เช่น คุณคือ Senior Full-Stack Developer ตอบคำถามโดยเน้นโค้ดที่สะอาด อ่านง่าย และมีประเภทข้อมูลชัดเจน..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 custom-scrollbar"></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <button onclick="app.closeRoleFormModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+                    ยกเลิก
+                </button>
+                <button onclick="app.saveRoleForm()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition">
+                    บันทึกบทบาท
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Settings & Custom API Key -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i> ตั้งค่าระบบ & Gemini API Key
+                </h3>
+                <button onclick="app.closeSettingsModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Google Gemini API Key (สำหรับต่อจริง)</label>
+                    <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-indigo-500">
+                    <p class="text-[10px] text-slate-500 mt-1">* หากเว้นว่างไว้ ระบบจะใช้ Intelligent Persona Simulator ที่ตอบสนองทันที</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">อุณหภูมิคำตอบ (Temperature)</label>
+                    <div class="flex items-center gap-3">
+                        <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('tempVal').innerText = this.value" class="flex-1 accent-indigo-500">
+                        <span id="tempVal" class="text-xs font-mono text-indigo-400 font-bold w-6">0.7</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="app.saveSettings()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition">
+                    บันทึกการตั้งค่า
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl shadow-2xl text-xs flex items-center gap-2.5 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        <span id="toastMsg">บันทึกสำเร็จ</span>
+    </div>
+
+    <script>
+        class OmniAIStudio {
+            constructor() {
+                this.models = {
+                    notebooklm: {
+                        id: 'notebooklm',
+                        name: 'NotebookLM',
+                        provider: 'Google Labs',
+                        icon: 'fa-book-bookmark',
+                        color: 'from-emerald-500 to-teal-700',
+                        badgeBg: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                        desc: 'ผู้เชี่ยวชาญการวิเคราะห์เอกสาร PDF และงานวิจัย สรุปประเด็นแม่นยำ พร้อมสร้าง Audio Overview Podcast',
+                        suggestions: [
+                            'ช่วยสรุปใจความสำคัญจากรายงาน PDF คลังเอกสารนี้',
+                            'สร้างโครงร่างคำถามบทสัมภาษณ์จากบทความวิจัย',
+                            'ทำตารางเปรียบเทียบข้อดีข้อเสียจากเอกสาร'
+                        ],
+                        mockSources: ['AI_Research_Paper_2026.pdf', 'Market_Analysis.docx']
+                    },
+                    perplexity: {
+                        id: 'perplexity',
+                        name: 'Perplexity AI',
+                        provider: 'Perplexity Inc.',
+                        icon: 'fa-globe',
+                        color: 'from-cyan-500 to-blue-700',
+                        badgeBg: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+                        desc: 'ค้นหาข้อมูลเรียลไทม์เจาะลึกบนอินเทอร์เน็ต พร้อม Deep Research และอ้างอิงแหล่งข่าวสด',
+                        suggestions: [
+                            'สรุปข่าวเทคโนโลยี AI ล่าสุดสัปดาห์นี้ปี 2026',
+                            'ค้นหาสถิติการใช้พลังงานสะอาดในปี 2026',
+                            'เปรียบเทียบฟีเจอร์สมาร์ตโฟนเรือธงรุ่นล่าสุด'
+                        ]
+                    },
+                    claude: {
+                        id: 'claude',
+                        name: 'Claude 3.5 Sonnet',
+                        provider: 'Anthropic',
+                        icon: 'fa-feather-pointed',
+                        color: 'from-amber-500 to-orange-700',
+                        badgeBg: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                        desc: 'โดดเด่นด้านภาษาการเขียนที่เป็นธรรมชาติ เรียบเรียงบทความ และสร้าง Artifacts Web UI Code',
+                        suggestions: [
+                            'เขียนอีเมลเจรจาธุรกิจภาษาไทยอย่างมืออาชีพ',
+                            'ช่วยออกแบบ UI Card Component ด้วย Tailwind CSS',
+                            'เรียบเรียงบทความบล็อกเรื่องควอนตัมคอมพิวเตอร์'
+                        ]
+                    },
+                    deepseek: {
+                        id: 'deepseek',
+                        name: 'DeepSeek R1 / V3',
+                        provider: 'DeepSeek AI',
+                        icon: 'fa-microchip',
+                        color: 'from-blue-600 to-indigo-800',
+                        badgeBg: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                        desc: 'AI สายคิดวิเคราะห์แบบ Chain-of-Thought แก้โจทย์คณิตศาสตร์ สถิติ และอัลกอริทึมซับซ้อน',
+                        suggestions: [
+                            'แก้โจทย์แคลคูลัสและอธิบายขั้นตอนวิธีคิดอย่างละเอียด',
+                            'เขียนฟังก์ชัน Binary Search Tree ใน C++ พร้อม Test Cases',
+                            'วิเคราะห์อัลกอริทึมและเพิ่มประสิทธิภาพระบบ Database'
+                        ]
+                    },
+                    gemini: {
+                        id: 'gemini',
+                        name: 'Gemini 3 Pro / Flash',
+                        provider: 'Google DeepMind',
+                        icon: 'fa-wand-magic-sparkles',
+                        color: 'from-purple-500 via-indigo-500 to-pink-500',
+                        badgeBg: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+                        desc: 'โมเดล Multimodal ประสิทธิภาพสูง รองรับบริบทใหญ่ถึง 2,000,000 Tokens ทำงานรวดเร็ว',
+                        suggestions: [
+                            'วิเคราะห์โครงสร้างแอปพลิเคชันจากข้อความคำสั่ง',
+                            'แปลภาษาไทย-อังกฤษระดับทางการ พร้อมปรับสำนวน',
+                            'วางแผนตารางเดินทางเที่ยวญี่ปุ่น 5 วันแบบละเอียด'
+                        ]
+                    },
+                    spark: {
+                        id: 'spark',
+                        name: 'Musk Spark (Grok)',
+                        provider: 'xAI',
+                        icon: 'fa-bolt',
+                        color: 'from-pink-600 via-rose-600 to-slate-900',
+                        badgeBg: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+                        desc: 'ดึงข้อมูลสดจาก X (Twitter) บุคลิกตรงไปตรงมา ค้นหาเทรนด์กระแสสังคมไวรัส',
+                        suggestions: [
+                            'สรุปประเด็นยอดฮิตบน X (Twitter) วันนี้',
+                            'มองแนวโน้มอนาคตของยานอวกาศ Starship',
+                            'วิเคราะห์กระแสความนิยมเกี่ยวกับ EV & Battery Tech'
+                        ]
+                    }
+                };
+
+                this.activeLayout = 'dashboard';
+                this.activeModelId = 'notebooklm';
+                this.splitActiveModels = ['perplexity', 'claude', 'deepseek'];
+                this.chatHistory = {};
+                this.apiKey = localStorage.getItem('gemini_api_key') || '';
+                this.currentTheme = 'cyber';
+
+                Object.keys(this.models).forEach(id => {
+                    this.chatHistory[id] = [];
+                });
+
+                const savedPrompts = localStorage.getItem('omni_prompt_library');
+                if (savedPrompts) {
+                    try { this.promptLibrary = JSON.parse(savedPrompts); } catch(e) { this.promptLibrary = this.getDefaultPrompts(); }
+                } else {
+                    this.promptLibrary = this.getDefaultPrompts();
+                    this.savePromptsToStorage();
+                }
+
+                const savedRoles = localStorage.getItem('omni_system_roles');
+                if (savedRoles) {
+                    try { this.systemRoles = JSON.parse(savedRoles); } catch(e) { this.systemRoles = this.getDefaultRoles(); }
+                } else {
+                    this.systemRoles = this.getDefaultRoles();
+                    this.saveRolesToStorage();
+                }
+
+                this.activeRoleId = localStorage.getItem('omni_active_role_id') || null;
+
+                this.init();
+            }
+
+            init() {
+                this.renderActiveRoleDisplay();
+                this.renderPromptLibraryModal();
+                this.renderRolesModal();
+            }
+
+            getDefaultPrompts() {
+                return [
+                    { id: 'p1', title: 'สรุปรายงาน PDF เชิงลึก', target: 'notebooklm', prompt: 'ช่วยสรุปสาระสำคัญ พร้อมจัดหมวดหมู่ประเด็นหลักและข้อเสนอแนะจากเอกสารนี้' },
+                    { id: 'p2', title: 'ค้นหาข่าวสด & อ้างอิง', target: 'perplexity', prompt: 'สรุปสถานการณ์ข่าวเทคโนโลยีล่าสุดในสัปดาห์นี้ พร้อมระบุแหล่งอ้างอิง' },
+                    { id: 'p3', title: 'สร้าง UI Component ด้วย Tailwind', target: 'claude', prompt: 'ช่วยสร้าง UI Card Dashboard ที่มีปุ่ม Graph และการตอบสนอง responsive โดยใช้ Tailwind CSS' },
+                    { id: 'p4', title: 'แก้โจทย์คณิต / Algorithm', target: 'deepseek', prompt: 'แสดงขั้นตอนความคิด Chain-of-Thought ในการแก้โจทย์นี้อย่างเป็นระบบ' },
+                    { id: 'p5', title: 'วางแผนงาน & Strategy', target: 'gemini', prompt: 'วางแผนกลยุทธ์การตลาดแบบครบวงจรสำหรับเปิดตัวผลิตภัณฑ์ใหม่' },
+                    { id: 'p6', title: 'วิเคราะห์กระแส X / Twitter', target: 'spark', prompt: 'สรุปเทรนด์ไวรัสย้อนหลัง 24 ชั่วโมงบน X พร้อมความคิดเห็นหลักของสังคม' }
+                ];
+            }
+
+            savePromptsToStorage() {
+                localStorage.setItem('omni_prompt_library', JSON.stringify(this.promptLibrary));
+            }
+
+            getDefaultRoles() {
+                return [
+                    { id: 'r1', name: 'ผู้เชี่ยวชาญ Full-Stack Developer', icon: 'fa-code', instruction: 'คุณคือ Senior Full-Stack Developer เขียนโค้ดที่รัดกุม สะอาด ปลอดภัย และมีคำอธิบายเข้าใจง่าย' },
+                    { id: 'r2', name: 'นักวิจัย & Data Analyst', icon: 'fa-microscope', instruction: 'คุณคือ Senior Data Analyst ตอบคำถามด้วยข้อมูล สถิติ อ้างอิงแหล่งที่มา และเปรียบเทียบข้อดีข้อเสียอย่างเป็นกลาง' },
+                    { id: 'r3', name: 'นักเขียนโฆษณา (Copywriter)', icon: 'fa-bullhorn', instruction: 'คุณคือ Copywriter ระดับมืออาชีพ ใช้ภาษาโน้มน้าวใจ น่าติดตาม และปรับสำนวนเข้ากับกลุ่มเป้าหมาย' },
+                    { id: 'r4', name: 'ติวเตอร์ & อาจารย์ผู้ช่วย', icon: 'fa-graduation-cap', instruction: 'คุณคือ ติวเตอร์ที่ใจดี อธิบายเรื่องยากให้เป็นเรื่องง่าย มีตัวอย่างประกอบชัดเจน' }
+                ];
+            }
+
+            saveRolesToStorage() {
+                localStorage.setItem('omni_system_roles', JSON.stringify(this.systemRoles));
+            }
+
+            switchLayoutMode(mode) {
+                this.activeLayout = mode;
+                document.getElementById('dashboardView').classList.add('hidden');
+                document.getElementById('consoleView').classList.add('hidden');
+                document.getElementById('splitView').classList.add('hidden');
+
+                document.getElementById('modeBtnDashboard').className = "px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+                document.getElementById('modeBtnConsole').className = "px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+                document.getElementById('modeBtnSplit').className = "px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+
+                if (mode === 'dashboard') {
+                    document.getElementById('dashboardView').classList.remove('hidden');
+                    document.getElementById('modeBtnDashboard').className = "px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-white bg-indigo-600 shadow";
+                } else if (mode === 'console') {
+                    document.getElementById('consoleView').classList.remove('hidden');
+                    document.getElementById('modeBtnConsole').className = "px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-white bg-indigo-600 shadow";
+                    this.setupConsoleView();
+                } else if (mode === 'split') {
+                    document.getElementById('splitView').classList.remove('hidden');
+                    document.getElementById('modeBtnSplit').className = "px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 text-white bg-indigo-600 shadow";
+                    this.renderSplitPanes();
+                }
+            }
+
+            openConsoleWithModel(modelId) {
+                this.activeModelId = modelId;
+                this.switchLayoutMode('console');
+            }
+
+            setupConsoleView() {
+                const m = this.models[this.activeModelId];
+                document.getElementById('activeModelTitle').innerText = m.name;
+                document.getElementById('activeModelSub').innerText = m.provider;
+                
+                const iconContainer = document.getElementById('activeModelIcon');
+                iconContainer.className = `w-7 h-7 rounded-lg bg-gradient-to-r ${m.color} flex items-center justify-center text-white text-xs shadow`;
+                iconContainer.innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
+
+                document.getElementById('welcomeModelBadge').className = `w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-xl bg-gradient-to-r ${m.color} text-white`;
+                document.getElementById('welcomeModelBadge').innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
+                document.getElementById('welcomeModelTitle').innerText = `ต้อนรับสู่ ${m.name} Studio`;
+                document.getElementById('welcomeModelDesc').innerText = m.desc;
+
+                // Prompt suggestions
+                const sugList = document.getElementById('promptSuggestionsList');
+                if (m.suggestions && m.suggestions.length > 0) {
+                    sugList.innerHTML = m.suggestions.map(s => `
+                        <button onclick="app.useSuggestion('${this.escapeHtml(s)}')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs transition text-left hover:border-indigo-500/50">
+                            💡 "${this.escapeHtml(s)}"
+                        </button>
+                    `).join('');
+                } else {
+                    sugList.innerHTML = '';
+                }
+
+                const contextBar = document.getElementById('contextBar');
+                if (this.activeModelId === 'notebooklm') {
+                    contextBar.classList.remove('hidden');
+                    this.renderContextSources();
+                } else {
+                    contextBar.classList.add('hidden');
+                }
+
+                this.renderMessages();
+            }
+
+            submitPrompt() {
+                const input = document.getElementById('promptInput');
+                let text = input.value.trim();
+                if (!text) return;
+
+                // Inject active System Role instruction if selected
+                if (this.activeRoleId) {
+                    const role = this.systemRoles.find(r => r.id === this.activeRoleId);
+                    if (role) {
+                        text = `[System Role: ${role.instruction}]\n\n${text}`;
+                    }
+                }
+
+                const modelId = this.activeModelId;
+                this.chatHistory[modelId].push({ role: 'user', text: text, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+                
+                input.value = '';
+                document.getElementById('welcomeMessageBlock').classList.add('hidden');
+                this.renderMessages();
+
+                this.generateModelResponse(modelId, text);
+            }
+
+            // Real Gemini API Call Engine with Personas & Search Grounding
+            async callGeminiAPI(promptText, systemPrompt = '', enableSearch = false) {
+                const apiKey = this.apiKey;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: promptText }] }]
+                };
+
+                if (enableSearch) {
+                    payload.tools = [{ "google_search": {} }];
+                }
+
+                if (systemPrompt) {
+                    payload.systemInstruction = {
+                        parts: [{ text: systemPrompt }]
+                    };
+                }
+
+                let delay = 1000;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        const res = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const data = await res.json();
+                        const candidate = data.candidates?.[0];
+                        const text = candidate?.content?.parts?.[0]?.text || 'ไม่พบผลลัพธ์คำตอบจาก Gemini API';
+                        
+                        let sources = [];
+                        const groundingMetadata = candidate?.groundingMetadata;
+                        if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                            sources = groundingMetadata.groundingAttributions
+                                .map(attr => ({ uri: attr.web?.uri, title: attr.web?.title }))
+                                .filter(s => s.uri && s.title);
+                        }
+
+                        return { text, sources };
+                    } catch (err) {
+                        if (attempt === 2) throw err;
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                    }
+                }
+            }
+
+            // Imagen 4.0 Image Generation
+            async generateImagen4ForPrompt() {
+                const input = document.getElementById('promptInput');
+                const promptText = input.value.trim() || "A futuristic AI laboratory with holographic multi-model intelligence network, cyber style, 8k render";
+                
+                this.showToast('กำลังส่งคำสั่งสร้างภาพด้วย Imagen 4.0...');
+                const modelId = this.activeModelId;
+                const msgIndex = this.chatHistory[modelId].length;
+                this.chatHistory[modelId].push({ role: 'assistant', text: '🎨 กำลังสร้างรูปภาพด้วย Imagen 4.0...', loading: true });
+                this.renderMessages();
+
+                try {
+                    const apiKey = this.apiKey;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+                    const payload = {
+                        instances: [{ prompt: promptText }],
+                        parameters: { sampleCount: 1 }
+                    };
+
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.predictions && data.predictions.length > 0 && data.predictions[0].bytesBase64Encoded) {
+                        const imgUrl = `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
+                        this.chatHistory[modelId][msgIndex] = {
+                            role: 'assistant',
+                            text: `🎨 **ภาพที่สร้างด้วย Imagen 4.0:**\n\n![Generated Image](${imgUrl})`,
+                            imageUrl: imgUrl,
+                            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                        };
+                    } else {
+                        throw new Error('ไม่ได้รับข้อมูลรูปภาพย้อนกลับ');
+                    }
+                } catch (err) {
+                    this.chatHistory[modelId][msgIndex] = {
+                        role: 'assistant',
+                        text: `⚠️ เกิดข้อผิดพลาดในการสร้างภาพด้วย Imagen: ${err.message}`,
+                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    };
+                }
+                this.renderMessages();
+            }
+
+            // Gemini TTS Audio Podcast Overview
+            async generateAudioOverviewForCurrent() {
+                const history = this.chatHistory[this.activeModelId];
+                const lastAssistantMsg = history.slice().reverse().find(m => m.role === 'assistant' && !m.loading);
+                
+                if (!lastAssistantMsg || !lastAssistantMsg.text) {
+                    this.showToast('ยังไม่มีข้อความตอบกลับจาก AI สำหรับแปลงเป็นเสียง Podcast');
+                    return;
+                }
+
+                this.showToast('กำลังแปลงข้อความตอบกลับเป็น Podcast เสียงด้วย Gemini TTS...');
+                
+                try {
+                    const apiKey = this.apiKey;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                    
+                    const cleanText = lastAssistantMsg.text.replace(/[*_#`~]/g, '').slice(0, 500);
+
+                    const payload = {
+                        contents: [{ parts: [{ text: `โปรดสรุปและเล่าเนื้อหานี้ในสไตล์พอดแคสต์เสียงน่าฟัง: ${cleanText}` }] }],
+                        generationConfig: {
+                            responseModalities: ["AUDIO"],
+                            speechConfig: {
+                                voiceConfig: {
+                                    prebuiltVoiceConfig: { voiceName: "Kore" }
+                                }
+                            }
+                        }
+                    };
+
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    const part = data?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+                    const mimeType = part?.inlineData?.mimeType || '';
+
+                    if (audioData) {
+                        let sampleRate = 24000;
+                        const match = mimeType.match(/rate=(\d+)/);
+                        if (match) sampleRate = parseInt(match[1], 10);
+
+                        const pcmBuffer = this.base64ToArrayBuffer(audioData);
+                        const pcm16 = new Int16Array(pcmBuffer);
+                        const wavBlob = this.pcmToWav(pcm16, sampleRate);
+                        const audioUrl = URL.createObjectURL(wavBlob);
+
+                        this.openSideToolPane('🎙️ NotebookLM Audio Overview Podcast', `
+                            <div class="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-lg">
+                                        <i class="fa-solid fa-podcast"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-xs text-slate-100">Audio Overview Episode</h4>
+                                        <p class="text-[10px] text-emerald-400">สร้างด้วย Gemini 2.5 TTS (Voice: Kore)</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-center items-center gap-1.5 h-8 bg-slate-900 rounded-xl p-2 border border-slate-800">
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                </div>
+
+                                <audio controls autoplay src="${audioUrl}" class="w-full mt-2 rounded-xl"></audio>
+                                <a href="${audioUrl}" download="notebooklm_podcast.wav" class="block text-center py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition">
+                                    <i class="fa-solid fa-download mr-1"></i> ดาวน์โหลดไฟล์เสียง WAV
+                                </a>
+                            </div>
+                        `);
+                    } else {
+                        throw new Error('ไม่สามารถรับข้อมูลเสียงได้');
+                    }
+                } catch (e) {
+                    this.showToast(`เกิดข้อผิดพลาดในการสร้าง TTS: ${e.message}`);
+                }
+            }
+
+            // Audio Helper Functions
+            base64ToArrayBuffer(base64) {
+                const binaryString = atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            pcmToWav(pcm16, sampleRate = 24000) {
+                const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+                const view = new DataView(buffer);
+                
+                const writeString = (view, offset, string) => {
+                    for (let i = 0; i < string.length; i++) {
+                        view.setUint8(offset + i, string.charCodeAt(i));
+                    }
+                };
+
+                writeString(view, 0, 'RIFF');
+                view.setUint32(4, 36 + pcm16.length * 2, true);
+                writeString(view, 8, 'WAVE');
+                writeString(view, 12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, 1, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * 2, true);
+                view.setUint16(32, 2, true);
+                view.setUint16(34, 16, true);
+                writeString(view, 36, 'data');
+                view.setUint32(40, pcm16.length * 2, true);
+                
+                let offset = 44;
+                for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                    view.setInt16(offset, pcm16[i], true);
+                }
+                return new Blob([buffer], { type: 'audio/wav' });
+            }
+
+            getSimulatedPersonaResponse(modelId, prompt) {
+                if (modelId === 'notebooklm') {
+                    return `📚 **NotebookLM Analysis Summary**\n\nจากการวิเคราะห์บริบทเอกสาร PDF คลังข้อมูลล่าสุดเกี่ยวกับคำถาม: "${prompt}"\n\n1. **ประเด็นสำคัญ (Key Takeaways):**\n   - มีการจัดลำดับหัวข้อและข้อมูลเชิงลึกเป็นระบบ\n   - สามารถสกัดตารางสรุปเปรียบเทียบได้โดยอัตโนมัติ\n\n2. **Audio Overview Podcast:**\n   - คุณสามารถกดปุ่ม **"สร้าง Podcast เสียง"** ที่แถบเครื่องมือด้านบนเพื่อฟังบทสนทนาเสียงบรรยายได้ทันที`;
+                } else if (modelId === 'perplexity') {
+                    return `🌐 **Perplexity Real-Time Web Search Results**\n\nสรุปข้อมูลจากการค้นหาเว็บสดปี 2026 สำหรับคำสั่ง: "${prompt}"\n\n- **ข่าวและแนวโน้มล่าสุด:** เทคโนโลยี AI ในปี 2026 พัฒนาสู่ระบบ Multi-Agent Architecture\n- **สรุปประเด็น:** ความสามารถในการ Grounding ข้อเท็จจริงถูกต้องแม่นยำขึ้นกว่า 95%\n\n🔗 *อ้างอิงแหล่งข่าวสารสดล่าสุดเรียลไทม์*`;
+                } else if (modelId === 'claude') {
+                    return `✨ **Claude 3.5 Sonnet Response**\n\nสวัสดีครับ ยินดีที่ได้ช่วยจัดทำข้อมูลสำหรับ: "${prompt}"\n\nนี่คือการเรียบเรียงภาษาที่พิถีพิถันและตรงประเด็น หากต้องการสร้าง UI Component ด้วย Tailwind CSS สามารถขอให้เขียนโค้ด HTML เพื่อดูพรีวิวบน **Artifacts Live Pane** ได้เลยครับ`;
+                } else if (modelId === 'deepseek') {
+                    return `<thought>\n1. ทำความเข้าใจโจทย์: "${prompt}"\n2. แยกแยะสมมติฐานและลำดับขั้นตอนการคิดแบบ Logic Tree\n3. คำนวณ/ตรวจสอบความถูกต้องของอัลกอริทึม\n4. สรุปผลลัพธ์สุดท้ายให้ชัดเจน\n</thought>\n\n🧮 **DeepSeek R1 Reasoning Conclusion**\n\nจากการวิเคราะห์ด้วย Chain-of-Thought สามารถสรุปคำตอบและแนวทางแก้ปัญหาได้ดังขั้นตอนข้างต้นครับ`;
+                } else if (modelId === 'spark') {
+                    return `⚡ **Musk Spark (Grok) X Feed Insights**\n\nสรุปกระแสสังคมไวรัสบน X (Twitter) เกี่ยวกับ: "${prompt}"\n\n🔥 **Hot Trends:**\n- มีการพูดถึงและส่งต่อแฮชแท็กติดเทรนด์อย่างรวดเร็ว\n- ความคิดเห็นของสังคมส่วนใหญ่ไปในทิศทางบวกและสนใจนวัตกรรมใหม่`;
+                } else {
+                    return `🔮 **Gemini 3 Pro Multimodal Answer**\n\nประมวลผลด้วยบริบทขนาดใหญ่ 2,000,000 Tokens เรียบร้อยสำหรับ: "${prompt}"\n\n- คำตอบมีความสมบูรณ์ และครอบคลุมหลายมิติ\n- รองรับการทำงานร่วมกับภาพ เสียง และเอกสารขนาดใหญ่`;
+                }
+            }
+
+            async generateModelResponse(modelId, userPrompt) {
+                const msgIndex = this.chatHistory[modelId].length;
+                this.chatHistory[modelId].push({ role: 'assistant', text: '...', loading: true });
+                this.renderMessages();
+
+                let aiText = '';
+                let citations = [];
+                const startTime = performance.now();
+                const isSearchEnabled = document.getElementById('searchGroundingToggle')?.checked || false;
+
+                let personaSystemPrompt = "";
+                if (modelId === 'notebooklm') {
+                    personaSystemPrompt = "คุณคือ NotebookLM ของ Google ตอบคำถามโดยอ้างอิงหลักการวิเคราะห์เอกสารอย่างรัดกุม เป็นทางการ แบ่งหมวดหมู่ประเด็น ชี้แนะที่มา";
+                } else if (modelId === 'perplexity') {
+                    personaSystemPrompt = "คุณคือ Perplexity AI ทำหน้าที่สืบค้นข้อมูลข่าวสารล่าสุด สกัดประเด็นคำตอบ และระบุอ้างอิงชัดเจน";
+                } else if (modelId === 'claude') {
+                    personaSystemPrompt = "คุณคือ Claude 3.5 Sonnet ของ Anthropic ตอบด้วยภาษาเรียบหรู ละเมียดละไม หากได้รับคำสั่งเกี่ยวกับ UI/Web Code ให้เขียน HTML + Tailwind CSS สมบูรณ์เพื่อสร้าง Artifacts";
+                } else if (modelId === 'deepseek') {
+                    personaSystemPrompt = "คุณคือ DeepSeek R1 แสดงขั้นตอนความคิดอย่างละเอียดก่อนสรุปคำตอบ โดยใส่ขั้นตอนการคิดไว้ในบล็อก <thought>...</thought>";
+                } else if (modelId === 'spark') {
+                    personaSystemPrompt = "คุณคือ Musk Spark (Grok) ตอบคำถามแบบตรงไปตรงมา สนุกสนาน และเกาะกระแสเทรนด์บน X (Twitter)";
+                } else {
+                    personaSystemPrompt = "คุณคือ Gemini 3 Pro โมเดล Multimodal ผู้เชี่ยวชาญระดับสูง ตอบคำถามแม่นยำ ฉลาด และครอบคลุม";
+                }
+
+                try {
+                    const result = await this.callGeminiAPI(userPrompt, personaSystemPrompt, isSearchEnabled || modelId === 'perplexity');
+                    aiText = result.text;
+                    citations = result.sources || [];
+                } catch (e) {
+                    aiText = this.getSimulatedPersonaResponse(modelId, userPrompt);
+                }
+
+                const endTime = performance.now();
+                const latency = ((endTime - startTime) / 1000).toFixed(2);
+
+                this.chatHistory[modelId][msgIndex] = {
+                    role: 'assistant',
+                    text: aiText,
+                    citations: citations,
+                    latency: `${latency}s`,
+                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                };
+
+                this.renderMessages();
+
+                if (aiText.includes('```html') || aiText.includes('<html')) {
+                    this.renderLiveArtifactPane(aiText);
+                }
+            }
+
+            renderLiveArtifactPane(text) {
+                let codeMatch = text.match(/```html([\s\S]*?)```/);
+                let htmlCode = codeMatch ? codeMatch[1] : text;
+
+                this.openSideToolPane('⚡ Live Artifact Preview (Claude UI)', `
+                    <div class="h-96 w-full rounded-2xl overflow-hidden border border-slate-800 bg-white">
+                        <iframe id="artifactIframe" class="w-full h-full border-none"></iframe>
+                    </div>
+                `);
+
+                setTimeout(() => {
+                    const iframe = document.getElementById('artifactIframe');
+                    if (iframe) {
+                        const doc = iframe.contentWindow.document;
+                        doc.open();
+                        doc.write(htmlCode);
+                        doc.close();
+                    }
+                }, 100);
+            }
+
+            openSideToolPane(title, htmlContent) {
+                document.getElementById('sidePaneTitle').innerHTML = title;
+                document.getElementById('sidePaneContent').innerHTML = htmlContent;
+                document.getElementById('sideToolPane').classList.remove('hidden');
+            }
+
+            closeSideToolPane() {
+                document.getElementById('sideToolPane').classList.add('hidden');
+            }
+
+            renderMessages() {
+                const modelId = this.activeModelId;
+                const messages = this.chatHistory[modelId];
+                const container = document.getElementById('messagesList');
+
+                if (messages.length > 0) {
+                    document.getElementById('welcomeMessageBlock').classList.add('hidden');
+                }
+
+                container.innerHTML = messages.map((msg, idx) => {
+                    if (msg.role === 'user') {
+                        return `
+                            <div class="flex justify-end mb-3">
+                                <div class="bg-indigo-600 text-white p-3.5 rounded-2xl rounded-tr-none text-xs max-w-xl shadow-md">
+                                    <p class="whitespace-pre-wrap">${this.escapeHtml(msg.text)}</p>
+                                    <span class="text-[9px] text-indigo-200 font-mono block text-right mt-1 opacity-70">${msg.time}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        const m = this.models[modelId];
+                        
+                        let textContent = msg.text || '';
+                        let thoughtHtml = '';
+                        if (textContent.includes('<thought>')) {
+                            const thoughtMatch = textContent.match(/<thought>([\s\S]*?)<\/thought>/);
+                            if (thoughtMatch) {
+                                thoughtHtml = `
+                                    <details class="mb-3 bg-slate-950 p-3 rounded-xl border border-blue-500/30 text-[11px] font-mono text-blue-300">
+                                        <summary class="cursor-pointer font-bold flex items-center gap-1.5"><i class="fa-solid fa-brain"></i> ขั้นตอนการคิด (Chain of Thought)</summary>
+                                        <div class="mt-2 whitespace-pre-wrap text-slate-400 border-t border-slate-800 pt-2">${this.escapeHtml(thoughtMatch[1])}</div>
+                                    </details>
+                                `;
+                                textContent = textContent.replace(/<thought>[\s\S]*?<\/thought>/, '');
+                            }
+                        }
+
+                        let citationsHtml = '';
+                        if (msg.citations && msg.citations.length > 0) {
+                            citationsHtml = `
+                                <div class="mt-3 pt-2 border-t border-slate-800 text-[11px]">
+                                    <div class="font-bold text-cyan-400 mb-1 flex items-center gap-1"><i class="fa-solid fa-link"></i> แหล่งอ้างอิงค้นหาเว็บสด (Google Grounding):</div>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        ${msg.citations.map(c => `
+                                            <a href="${c.uri}" target="_blank" rel="noopener" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-[10px] flex items-center gap-1 truncate max-w-xs">
+                                                <i class="fa-solid fa-globe text-[9px]"></i> ${this.escapeHtml(c.title)}
+                                            </a>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        let artifactBtn = '';
+                        if (textContent.includes('```html') || textContent.includes('<html')) {
+                            artifactBtn = `
+                                <button onclick="app.renderLiveArtifactPane(app.chatHistory['${modelId}'][${idx}].text)" class="mt-2 px-3 py-1 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 rounded-lg text-[11px] transition flex items-center gap-1">
+                                    <i class="fa-solid fa-bolt"></i> ดูพรีวิว UI Artifact
+                                </button>
+                            `;
+                        }
+
+                        return `
+                            <div class="flex items-start space-x-3 mb-4">
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-r ${m.color} text-white flex items-center justify-center text-xs shrink-0 shadow-md mt-1">
+                                    <i class="fa-solid ${m.icon}"></i>
+                                </div>
+                                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl rounded-tl-none text-xs text-slate-200 max-w-2xl space-y-2 shadow-md w-full">
+                                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5 mb-2">
+                                        <span class="font-bold text-slate-100">${m.name}</span>
+                                        ${msg.latency ? `<span class="text-[10px] text-slate-400 font-mono">⏱️ ${msg.latency}</span>` : ''}
+                                    </div>
+                                    ${msg.loading ? `
+                                        <div class="flex items-center space-x-2 text-indigo-400">
+                                            <i class="fa-solid fa-spinner fa-spin text-sm"></i>
+                                            <span class="text-xs">กำลังประมวลผลคำตอบจาก Gemini API...</span>
+                                        </div>
+                                    ` : `
+                                        ${thoughtHtml}
+                                        <div class="whitespace-pre-wrap leading-relaxed">${this.formatMarkdown(textContent)}</div>
+                                        ${msg.imageUrl ? `<img src="${msg.imageUrl}" class="w-full rounded-xl border border-slate-800 my-2 shadow-lg" />` : ''}
+                                        ${artifactBtn}
+                                        ${citationsHtml}
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }).join('');
+
+                const chatContainer = document.getElementById('chatStreamContainer');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            toggleSplitModel(id) {
+                if (this.splitActiveModels.includes(id)) {
+                    if (this.splitActiveModels.length > 1) {
+                        this.splitActiveModels = this.splitActiveModels.filter(m => m !== id);
+                    } else {
+                        this.showToast('กรุณาเลือกอย่างน้อย 1 โมเดล');
+                        return;
+                    }
+                } else {
+                    this.splitActiveModels.push(id);
+                }
+                this.renderSplitPanes();
+            }
+
+            renderSplitPanes(promptText = null) {
+                const grid = document.getElementById('splitPanesGrid');
+                grid.innerHTML = this.splitActiveModels.map(id => {
+                    const m = this.models[id];
+                    const resp = promptText ? this.getSimulatedPersonaResponse(id, promptText) : 'กด "รันเปรียบเทียบ" เพื่อดูคำตอบของ AI ในช่องนี้...';
+
+                    return `
+                        <div class="w-80 sm:w-96 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
+                            <div class="p-3 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-6 h-6 rounded-lg bg-gradient-to-r ${m.color} text-white flex items-center justify-center text-[10px]">
+                                        <i class="fa-solid ${m.icon}"></i>
+                                    </div>
+                                    <span class="font-bold text-xs text-slate-100">${m.name}</span>
+                                </div>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded font-mono ${m.badgeBg}">${m.provider}</span>
+                            </div>
+                            <div class="flex-1 p-4 text-xs text-slate-300 leading-relaxed overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+                                ${this.formatMarkdown(resp)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            runSplitComparison() {
+                const input = document.getElementById('splitPromptInput');
+                const text = input.value.trim();
+                if (!text) return;
+
+                this.renderSplitPanes(text);
+                this.showToast(`รันคำตอบเปรียบเทียบ ${this.splitActiveModels.length} โมเดลเรียบร้อย`);
+            }
+
+            // System Roles Management Methods
+            renderActiveRoleDisplay() {
+                const badgeBar = document.getElementById('activeRoleBadgeBar');
+                const nameDisplay = document.getElementById('activeRoleNameDisplay');
+                if (this.activeRoleId) {
+                    const role = this.systemRoles.find(r => r.id === this.activeRoleId);
+                    if (role) {
+                        nameDisplay.innerText = role.name;
+                        badgeBar.classList.remove('hidden');
+                        return;
+                    }
+                }
+                badgeBar.classList.add('hidden');
+            }
+
+            selectActiveRole(roleId) {
+                if (this.activeRoleId === roleId) {
+                    this.activeRoleId = null;
+                } else {
+                    this.activeRoleId = roleId;
+                }
+                localStorage.setItem('omni_active_role_id', this.activeRoleId || '');
+                this.renderActiveRoleDisplay();
+                this.renderRolesModal();
+                this.showToast(this.activeRoleId ? 'เลือกบทบาทเรียบร้อยแล้ว' : 'ยกเลิกการเลือกบทบาทแล้ว');
+            }
+
+            clearActiveRole() {
+                this.activeRoleId = null;
+                localStorage.removeItem('omni_active_role_id');
+                this.renderActiveRoleDisplay();
+                this.renderRolesModal();
+                this.showToast('ยกเลิกบทบาทเรียบร้อยแล้ว');
+            }
+
+            openRoleModal() {
+                this.renderRolesModal();
+                document.getElementById('roleModal').classList.remove('hidden');
+            }
+
+            closeRoleModal() {
+                document.getElementById('roleModal').classList.add('hidden');
+            }
+
+            renderRolesModal() {
+                const container = document.getElementById('rolesContainer');
+                if (!container) return;
+                container.innerHTML = this.systemRoles.map(role => {
+                    const isActive = this.activeRoleId === role.id;
+                    return `
+                        <div class="p-4 rounded-xl border ${isActive ? 'bg-indigo-950/60 border-indigo-500 shadow-lg shadow-indigo-500/10' : 'bg-slate-950 border-slate-800'} transition flex items-center justify-between gap-4">
+                            <div class="flex items-start gap-3 flex-1 min-w-0">
+                                <div class="w-9 h-9 rounded-xl ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'} flex items-center justify-center shrink-0 text-sm">
+                                    <i class="fa-solid ${role.icon}"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="font-bold text-xs text-slate-100 truncate">${this.escapeHtml(role.name)}</span>
+                                        ${isActive ? `<span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2 py-0.5 rounded-full border border-indigo-500/30">ใช้งานอยู่</span>` : ''}
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 line-clamp-2">${this.escapeHtml(role.instruction)}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <button onclick="app.selectActiveRole('${role.id}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${isActive ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}">
+                                    ${isActive ? 'ยกเลิก' : 'เลือกใช้'}
+                                </button>
+                                <button onclick="app.openRoleFormModal('${role.id}')" class="p-1.5 text-slate-400 hover:text-indigo-400 transition" title="แก้ไข">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="app.deleteRole('${role.id}')" class="p-1.5 text-slate-400 hover:text-red-400 transition" title="ลบ">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            openRoleFormModal(roleId = null) {
+                document.getElementById('editRoleId').value = roleId || '';
+                if (roleId) {
+                    const role = this.systemRoles.find(r => r.id === roleId);
+                    if (role) {
+                        document.getElementById('roleFormTitle').innerText = 'แก้ไขบทบาท AI';
+                        document.getElementById('formRoleName').value = role.name;
+                        document.getElementById('formRoleIcon').value = role.icon;
+                        document.getElementById('formRoleInstruction').value = role.instruction;
+                    }
+                } else {
+                    document.getElementById('roleFormTitle').innerText = 'เพิ่มบทบาทใหม่';
+                    document.getElementById('formRoleName').value = '';
+                    document.getElementById('formRoleIcon').value = 'fa-user-ninja';
+                    document.getElementById('formRoleInstruction').value = '';
+                }
+                document.getElementById('roleFormModal').classList.remove('hidden');
+            }
+
+            closeRoleFormModal() {
+                document.getElementById('roleFormModal').classList.add('hidden');
+            }
+
+            saveRoleForm() {
+                const id = document.getElementById('editRoleId').value;
+                const name = document.getElementById('formRoleName').value.trim();
+                const icon = document.getElementById('formRoleIcon').value;
+                const instruction = document.getElementById('formRoleInstruction').value.trim();
+
+                if (!name || !instruction) {
+                    this.showToast('กรุณากรอกชื่อบทบาทและคำสั่งให้ครบถ้วน');
+                    return;
+                }
+
+                if (id) {
+                    const role = this.systemRoles.find(r => r.id === id);
+                    if (role) {
+                        role.name = name;
+                        role.icon = icon;
+                        role.instruction = instruction;
+                    }
+                } else {
+                    const newRole = { id: 'r_' + Date.now(), name, icon, instruction };
+                    this.systemRoles.push(newRole);
+                }
+
+                this.saveRolesToStorage();
+                this.renderRolesModal();
+                this.renderActiveRoleDisplay();
+                this.closeRoleFormModal();
+                this.showToast('บันทึกบทบาทเรียบร้อยแล้ว');
+            }
+
+            deleteRole(id) {
+                this.systemRoles = this.systemRoles.filter(r => r.id !== id);
+                if (this.activeRoleId === id) {
+                    this.activeRoleId = null;
+                    localStorage.removeItem('omni_active_role_id');
+                    this.renderActiveRoleDisplay();
+                }
+                this.saveRolesToStorage();
+                this.renderRolesModal();
+                this.showToast('ลบบทบาทเรียบร้อยแล้ว');
+            }
+
+            // Prompt Library CRUD Methods
+            renderPromptLibraryModal() {
+                const container = document.getElementById('promptLibraryContainer');
+                if (!container) return;
+                
+                const searchVal = (document.getElementById('promptSearchInput')?.value || '').toLowerCase();
+                const targetVal = document.getElementById('promptFilterTarget')?.value || 'all';
+
+                const filtered = this.promptLibrary.filter(item => {
+                    const matchSearch = item.title.toLowerCase().includes(searchVal) || item.prompt.toLowerCase().includes(searchVal);
+                    const matchTarget = targetVal === 'all' || item.target === targetVal;
+                    return matchSearch && matchTarget;
+                });
+
+                const countBadge = document.getElementById('promptCountBadge');
+                if (countBadge) countBadge.innerText = `${filtered.length} รายการ`;
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">ไม่พบ Prompt ที่ค้นหา</p>`;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(item => `
+                    <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 transition flex items-center justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-bold text-xs text-slate-200 truncate">${this.escapeHtml(item.title)}</span>
+                                <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase shrink-0">${item.target}</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 italic line-clamp-2">"${this.escapeHtml(item.prompt)}"</p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button onclick="app.usePromptFromLibrary('${this.escapeHtml(item.prompt).replace(/'/g, "\\'")}', '${item.target}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-lg transition font-medium">
+                                นำไปใช้
+                            </button>
+                            <button onclick="app.openPromptFormModal('${item.id}')" class="p-1.5 text-slate-400 hover:text-indigo-400 transition" title="แก้ไข">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="app.deletePrompt('${item.id}')" class="p-1.5 text-slate-400 hover:text-red-400 transition" title="ลบ">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            openPromptFormModal(promptId = null) {
+                document.getElementById('editPromptId').value = promptId || '';
+                if (promptId) {
+                    const item = this.promptLibrary.find(p => p.id === promptId);
+                    if (item) {
+                        document.getElementById('promptFormTitle').innerText = 'แก้ไข Prompt';
+                        document.getElementById('formPromptTitle').value = item.title;
+                        document.getElementById('formPromptTarget').value = item.target;
+                        document.getElementById('formPromptText').value = item.prompt;
+                    }
+                } else {
+                    document.getElementById('promptFormTitle').innerText = 'สร้าง Prompt ใหม่';
+                    document.getElementById('formPromptTitle').value = '';
+                    document.getElementById('formPromptTarget').value = this.activeModelId || 'notebooklm';
+                    document.getElementById('formPromptText').value = '';
+                }
+                document.getElementById('promptFormModal').classList.remove('hidden');
+            }
+
+            closePromptFormModal() {
+                document.getElementById('promptFormModal').classList.add('hidden');
+            }
+
+            savePromptForm() {
+                const id = document.getElementById('editPromptId').value;
+                const title = document.getElementById('formPromptTitle').value.trim();
+                const target = document.getElementById('formPromptTarget').value;
+                const promptText = document.getElementById('formPromptText').value.trim();
+
+                if (!title || !promptText) {
+                    this.showToast('กรุณากรอกหัวข้อและข้อความ Prompt ให้ครบถ้วน');
+                    return;
+                }
+
+                if (id) {
+                    const item = this.promptLibrary.find(p => p.id === id);
+                    if (item) {
+                        item.title = title;
+                        item.target = target;
+                        item.prompt = promptText;
+                    }
+                } else {
+                    const newItem = { id: 'p_' + Date.now(), title, target, prompt: promptText };
+                    this.promptLibrary.push(newItem);
+                }
+
+                this.savePromptsToStorage();
+                this.renderPromptLibraryModal();
+                this.closePromptFormModal();
+                this.showToast('บันทึก Prompt เรียบร้อยแล้ว');
+            }
+
+            deletePrompt(id) {
+                this.promptLibrary = this.promptLibrary.filter(p => p.id !== id);
+                this.savePromptsToStorage();
+                this.renderPromptLibraryModal();
+                this.showToast('ลบ Prompt เรียบร้อยแล้ว');
+            }
+
+            usePromptFromLibrary(text, targetModel) {
+                this.openConsoleWithModel(targetModel);
+                document.getElementById('promptInput').value = text;
+                this.closePromptLibraryModal();
+            }
+
+            openPromptLibraryModal() { 
+                this.renderPromptLibraryModal();
+                document.getElementById('promptLibraryModal').classList.remove('hidden'); 
+            }
+            closePromptLibraryModal() { document.getElementById('promptLibraryModal').classList.add('hidden'); }
+
+            openSettingsModal() { 
+                document.getElementById('apiKeyInput').value = this.apiKey;
+                document.getElementById('settingsModal').classList.remove('hidden'); 
+            }
+            closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); }
+
+            saveSettings() {
+                this.apiKey = document.getElementById('apiKeyInput').value.trim();
+                localStorage.setItem('gemini_api_key', this.apiKey);
+                this.closeSettingsModal();
+                this.showToast('บันทึกการตั้งค่าเรียบร้อยแล้ว');
+            }
+
+            toggleThemeDropdown() {
+                document.getElementById('themeDropdownMenu').classList.toggle('hidden');
+            }
+
+            setThemeStyle(style) {
+                this.currentTheme = style;
+                const body = document.getElementById('appBody');
+
+                document.querySelectorAll('.theme-check').forEach(el => el.classList.add('hidden'));
+
+                if (style === 'cyber') {
+                    body.className = "h-screen flex flex-col overflow-hidden select-none bg-slate-950 text-slate-100 transition-colors duration-300";
+                    document.getElementById('checkCyber').classList.remove('hidden');
+                } else if (style === 'slate') {
+                    body.className = "h-screen flex flex-col overflow-hidden select-none bg-slate-900 text-slate-100 transition-colors duration-300";
+                    document.getElementById('checkSlate').classList.remove('hidden');
+                } else if (style === 'light') {
+                    body.className = "h-screen flex flex-col overflow-hidden select-none bg-slate-100 text-slate-900 transition-colors duration-300";
+                    document.getElementById('checkLight').classList.remove('hidden');
+                }
+
+                document.getElementById('themeDropdownMenu').classList.add('hidden');
+                this.showToast(`เปลี่ยนสไตล์ UI เป็น ${style}`);
+            }
+
+            renderContextSources() {
+                const m = this.models.notebooklm;
+                const container = document.getElementById('contextBadgesList');
+                container.innerHTML = m.mockSources.map((s, idx) => `
+                    <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px] flex items-center gap-1">
+                        <i class="fa-solid fa-file-lines text-emerald-400"></i> ${s}
+                    </span>
+                `).join('');
+            }
+
+            addMockSource() {
+                const name = prompt('ระบุชื่อไฟล์ หรือ URL เอกสารที่จะเพิ่มเข้าคลังข้อมูล:');
+                if (name) {
+                    this.models.notebooklm.mockSources.push(name);
+                    this.renderContextSources();
+                    this.showToast(`เพิ่มคลังข้อมูล "${name}" เรียบร้อย`);
+                }
+            }
+
+            useSuggestion(text) {
+                document.getElementById('promptInput').value = text;
+                this.submitPrompt();
+            }
+
+            filterCategory(cat) {
+                document.querySelectorAll('.cat-btn').forEach(btn => {
+                    if (btn.getAttribute('data-cat') === cat) {
+                        btn.className = 'cat-btn px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-medium transition';
+                    } else {
+                        btn.className = 'cat-btn px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition';
+                    }
+                });
+
+                document.querySelectorAll('#modelCardGrid > div').forEach(card => {
+                    const cardCat = card.getAttribute('data-category') || '';
+                    if (cat === 'all' || cardCat.includes(cat)) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            filterModels(query) {
+                const q = query.toLowerCase();
+                document.querySelectorAll('#modelCardGrid > div').forEach(card => {
+                    card.style.display = card.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+                });
+            }
+
+            showToast(msg) {
+                const toast = document.getElementById('toast');
+                document.getElementById('toastMsg').innerText = msg;
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+            }
+
+            escapeHtml(str) { 
+                if (!str) return '';
+                return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); 
+            }
+
+            formatMarkdown(text) {
+                if (!text) return '';
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/`([^`]+)`/g, '<code class="bg-slate-950 px-1.5 py-0.5 rounded text-indigo-300 font-mono text-[11px]">$1</code>')
+                    .replace(/```([\s\S]*?)```/g, '<pre class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-emerald-400 my-2 overflow-x-auto">$1</pre>');
+            }
+        }
+
+        let app;
+        window.onload = function() {
+            app = new OmniAIStudio();
+        };
+    </script>
+</body>
+</html>

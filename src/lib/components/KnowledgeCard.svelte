@@ -8,7 +8,7 @@
   let { knowledge }: Props = $props();
 </script>
 
-<div class="bg-white rounded-lg shadow-md p-5 hover:shadow-lg transition-shadow border-l-4 border-green-500">
+<div class="card card-accent-green p-5">
   <div class="flex justify-between items-start mb-2">
     <h3 class="font-semibold text-lg text-gray-900 line-clamp-1">
       {knowledge.title}
@@ -23,7 +23,7 @@
   </p>
 
   <div class="flex flex-wrap gap-2 mb-3">
-    {#each knowledge.metadata.tags as tag}
+    {#each knowledge.metadata.tags as tag (tag)}
       <span class="px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs">
         #{tag}
       </span>

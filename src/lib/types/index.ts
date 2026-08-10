@@ -7,6 +7,9 @@ export interface Agent {
   memory: Memory[];
   capabilities: string[];
   status: AgentStatus;
+  provider?: string;
+  model?: string;
+  avatarColor?: string;
 }
 
 export interface Identity {
@@ -77,25 +80,56 @@ export interface ScheduledTask {
   nextRun?: Date;
 }
 
-export interface Tool {
-  id: string;
-  name: string;
-  description: string;
-  parameters: ToolParameter[];
-  execute: (params: Record<string, any>) => Promise<any>;
-}
-
-export interface ToolParameter {
-  name: string;
-  type: string;
-  description: string;
-  required: boolean;
-}
-
 export interface Message {
   id: string;
   senderId: string;
   content: string;
   timestamp: Date;
   metadata?: Record<string, any>;
+}
+
+// ==================== Chat (คุยกับ Agent) ====================
+
+/** รายการในประวัติแชท (ใช้กับ panel ประวัติแชทฝั่งซ้าย / sidebar) */
+export interface ChatHistoryItem {
+  id: string;
+  title: string;
+  isGroup: boolean;
+  agentId: string | null;
+  agentName: string | null;
+  updatedAt: string;
+  /** ข้อความล่าสุดในห้อง (แสดงตัวอย่าง) */
+  preview?: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  agentId?: string | null;
+  isGroup: boolean;
+  title: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ChatMessage {
+  id: string;
+  chatId: string;
+  role: 'user' | 'agent';
+  agentId?: string | null;
+  content: string;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+}
+
+// ==================== ผลงาน (Portfolio) ======================
+
+export interface AgentWork {
+  id: string;
+  agentId?: string | null;
+  agentName?: string;
+  chatId?: string | null;
+  title: string;
+  content: string;
+  tags: string[];
+  createdAt: Date;
 }

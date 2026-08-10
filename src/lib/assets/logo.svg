@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="edge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6d28d9" />
+      <stop offset="100%" stop-color="#1e3a8a" />
+    </linearGradient>
+    <linearGradient id="gloss" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45" />
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="line" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e9d5ff" />
+      <stop offset="45%" stop-color="#bfdbfe" />
+      <stop offset="100%" stop-color="#ffffff" />
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.4" />
+    </filter>
+    <filter id="lift" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+    <clipPath id="badgeClip">
+      <rect x="2" y="2" width="60" height="60" rx="16" />
+    </clipPath>
+  </defs>
+  <style>
+    .spin { animation: spin 8s linear infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!-- ป้ายแบบมีมิติ: ขอบเข้ม (bevel) + พื้นไล่สี + เงาตกกระทบ -->
+  <g filter="url(#shadow)">
+    <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#edge)" />
+    <rect x="3.5" y="3.5" width="57" height="57" rx="14" fill="url(#bg)" />
+  </g>
+  <!-- ไฮไลต์มันเงา + แถบสะท้อนแสงด้านบน -->
+  <g clip-path="url(#badgeClip)">
+    <rect x="2" y="2" width="60" height="34" fill="url(#gloss)" />
+    <rect x="2" y="2" width="60" height="4" fill="#ffffff" opacity="0.55" />
+  </g>
+
+  <!-- infinity แบบ 3 มิติ: 3 ชั้น (ล่างเข้ม → กลางม่วง → หน้าไล่สีสว่าง) -->
+  <g transform="translate(32,32) scale(2)">
+    <g class="spin">
+      <g transform="translate(0,2.2)">
+        <path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4z" fill="none" stroke="#312e81" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(0,1)">
+        <path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4z" fill="none" stroke="#7c3aed" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+      <g filter="url(#lift)">
+        <path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4z" fill="none" stroke="url(#line)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </g>
+  </g>
+</svg>

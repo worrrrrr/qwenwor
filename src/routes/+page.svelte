@@ -1,22 +1,17 @@
 <script lang="ts">
-  import { getAllAgents } from '$lib/agents';
-  import { getAllKnowledge } from '$lib/knowledge';
-  import { getAllWorkflows, getActiveWorkflows } from '$lib/workflow';
-  import { getAllTasks } from '$lib/scheduler';
-  import { getAllTools } from '$lib/tools';
-  
+  import Icons from '$lib/components/Icons.svelte';
   import AgentCard from '$lib/components/AgentCard.svelte';
   import KnowledgeCard from '$lib/components/KnowledgeCard.svelte';
   import WorkflowCard from '$lib/components/WorkflowCard.svelte';
   import TaskCard from '$lib/components/TaskCard.svelte';
-  import ToolCard from '$lib/components/ToolCard.svelte';
 
-  const agents = getAllAgents();
-  const knowledge = getAllKnowledge();
-  const workflows = getAllWorkflows();
-  const activeWorkflows = getActiveWorkflows();
-  const tasks = getAllTasks();
-  const tools = getAllTools();
+  let { data } = $props();
+
+  const agents = $derived(data.agents);
+  const knowledge = $derived(data.knowledge);
+  const workflows = $derived(data.workflows);
+  const tasks = $derived(data.tasks);
+  const activeWorkflows = $derived(workflows.filter((w) => w.status === 'running'));
 </script>
 
 <svelte:head>
@@ -24,8 +19,9 @@
 </svelte:head>
 
 <div class="mb-8">
-  <h1 class="text-4xl font-bold text-gray-900 mb-2">
-    🤖 Agentic Knowledge Workspace
+  <h1 class="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+    <Icons name="robot" size={36} class="shrink-0" />
+    Agentic Knowledge Workspace
   </h1>
   <p class="text-gray-600">
     Multi-Agent System สำหรับการจัดการความรู้และการทำงานอัตโนมัติ
@@ -34,9 +30,9 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
   <!-- Agents Card -->
-  <a href="/agents" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer">
+  <a href="/agents" class="card p-6 cursor-pointer">
     <div class="flex items-center mb-4">
-      <span class="text-3xl mr-3">👥</span>
+      <Icons name="agents" size={30} class="mr-3 text-blue-600 shrink-0" />
       <h2 class="text-xl font-semibold">Agents</h2>
     </div>
     <p class="text-3xl font-bold text-blue-600 mb-2">{agents.length}</p>
@@ -54,9 +50,9 @@
   </a>
 
   <!-- Knowledge Base Card -->
-  <a href="/knowledge" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer">
+  <a href="/knowledge" class="card p-6 cursor-pointer">
     <div class="flex items-center mb-4">
-      <span class="text-3xl mr-3">📚</span>
+      <Icons name="knowledge" size={30} class="mr-3 text-green-600 shrink-0" />
       <h2 class="text-xl font-semibold">Knowledge Base</h2>
     </div>
     <p class="text-3xl font-bold text-green-600 mb-2">{knowledge.length}</p>
@@ -64,9 +60,9 @@
   </a>
 
   <!-- Workflows Card -->
-  <a href="/workflows" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer">
+  <a href="/workflows" class="card p-6 cursor-pointer">
     <div class="flex items-center mb-4">
-      <span class="text-3xl mr-3">⚙️</span>
+      <Icons name="workflows" size={30} class="mr-3 text-purple-600 shrink-0" />
       <h2 class="text-xl font-semibold">Workflows</h2>
     </div>
     <p class="text-3xl font-bold text-purple-600 mb-2">{workflows.length}</p>
@@ -76,29 +72,29 @@
   </a>
 
   <!-- Scheduler Card -->
-  <a href="/tasks" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer">
+  <a href="/tasks" class="card p-6 cursor-pointer">
     <div class="flex items-center mb-4">
-      <span class="text-3xl mr-3">⏰</span>
+      <Icons name="tasks" size={30} class="mr-3 text-orange-600 shrink-0" />
       <h2 class="text-xl font-semibold">Scheduled Tasks</h2>
     </div>
     <p class="text-3xl font-bold text-orange-600 mb-2">{tasks.length}</p>
     <p class="text-sm text-gray-500">งานอัตโนมัติ</p>
   </a>
 
-  <!-- Tools Card -->
-  <a href="/tools" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer">
+  <!-- แชทกับ Agent Card -->
+  <a href="/chat" class="card p-6 cursor-pointer">
     <div class="flex items-center mb-4">
-      <span class="text-3xl mr-3">🛠️</span>
-      <h2 class="text-xl font-semibold">Tools</h2>
+      <Icons name="chat" size={30} class="mr-3 text-indigo-600 shrink-0" />
+      <h2 class="text-xl font-semibold">แชทกับ Agent</h2>
     </div>
-    <p class="text-3xl font-bold text-red-600 mb-2">{tools.length}</p>
-    <p class="text-sm text-gray-500">เครื่องมือที่พร้อมใช้งาน</p>
+    <p class="text-3xl font-bold text-indigo-600 mb-2">{agents.length}</p>
+    <p class="text-sm text-gray-500">คุยแยก หรือรวมห้องได้</p>
   </a>
 
   <!-- Memory Card -->
-  <div class="bg-white rounded-lg shadow-md p-6">
+  <div class="card p-6">
     <div class="flex items-center mb-4">
-      <span class="text-3xl mr-3">🧠</span>
+      <Icons name="memory" size={30} class="mr-3 text-indigo-500 shrink-0" />
       <h2 class="text-xl font-semibold">Memory System</h2>
     </div>
     <p class="text-lg font-medium text-indigo-600">เปิดใช้งาน</p>
@@ -112,9 +108,11 @@
 {#if agents.length > 0 || workflows.length > 0 || tasks.length > 0}
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     {#if agents.length > 0}
-      <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="card p-6">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">👥 Recent Agents</h2>
+          <h2 class="text-xl font-semibold flex items-center gap-2">
+            <Icons name="agents" size={22} class="shrink-0" /> Recent Agents
+          </h2>
           <a href="/agents" class="text-sm text-blue-600 hover:underline">View All</a>
         </div>
         <div class="space-y-3">
@@ -126,9 +124,11 @@
     {/if}
 
     {#if workflows.length > 0}
-      <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="card p-6">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">⚙️ Active Workflows</h2>
+          <h2 class="text-xl font-semibold flex items-center gap-2">
+            <Icons name="workflows" size={22} class="shrink-0" /> Active Workflows
+          </h2>
           <a href="/workflows" class="text-sm text-blue-600 hover:underline">View All</a>
         </div>
         <div class="space-y-3">
@@ -141,49 +141,51 @@
   </div>
 {/if}
 
-<div class="mt-8 bg-white rounded-lg shadow-md p-6">
-  <h2 class="text-2xl font-semibold mb-4">🎯 องค์ประกอบหลักของระบบ</h2>
+<div class="mt-8 card p-6">
+  <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+    <Icons name="target" size={24} class="shrink-0" /> องค์ประกอบหลักของระบบ
+  </h2>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     <div class="flex items-start">
-      <span class="text-green-500 mr-2">✓</span>
+      <Icons name="check" size={16} class="text-green-500 mr-1 shrink-0" />
       <div>
         <h3 class="font-medium">Knowledge Base (RAG)</h3>
         <p class="text-sm text-gray-600">ระบบจัดเก็บและค้นหาความรู้</p>
       </div>
     </div>
     <div class="flex items-start">
-      <span class="text-green-500 mr-2">✓</span>
+      <Icons name="check" size={16} class="text-green-500 mr-1 shrink-0" />
       <div>
         <h3 class="font-medium">Memory + Identity</h3>
         <p class="text-sm text-gray-600">จัดการตัวตนและความจำของ Agent</p>
       </div>
     </div>
     <div class="flex items-start">
-      <span class="text-green-500 mr-2">✓</span>
+      <Icons name="check" size={16} class="text-green-500 mr-1 shrink-0" />
       <div>
         <h3 class="font-medium">Multi-Agent System</h3>
         <p class="text-sm text-gray-600">ก็อต, น้องบี, Brian</p>
       </div>
     </div>
     <div class="flex items-start">
-      <span class="text-green-500 mr-2">✓</span>
+      <Icons name="check" size={16} class="text-green-500 mr-1 shrink-0" />
       <div>
         <h3 class="font-medium">Workflow Engine</h3>
         <p class="text-sm text-gray-600">จัดการลำดับขั้นตอนการทำงาน</p>
       </div>
     </div>
     <div class="flex items-start">
-      <span class="text-green-500 mr-2">✓</span>
+      <Icons name="check" size={16} class="text-green-500 mr-1 shrink-0" />
       <div>
         <h3 class="font-medium">Automation Scheduler</h3>
         <p class="text-sm text-gray-600">รันงานตามเวลาที่กำหนด</p>
       </div>
     </div>
     <div class="flex items-start">
-      <span class="text-green-500 mr-2">✓</span>
+      <Icons name="check" size={16} class="text-green-500 mr-1 shrink-0" />
       <div>
-        <h3 class="font-medium">Tools & Actions</h3>
-        <p class="text-sm text-gray-600">ชุดเครื่องมือที่ Agent เรียกใช้</p>
+        <h3 class="font-medium">แชทกับ Agent</h3>
+        <p class="text-sm text-gray-600">คุยเดี่ยวหรือห้องรวม พร้อมบันทึกผลงาน</p>
       </div>
     </div>
   </div>
