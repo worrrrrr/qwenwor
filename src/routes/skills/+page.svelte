@@ -168,8 +168,8 @@
                     📊 {getLevelLabel(skill.level)}
                   </span>
                   
-                  {@const agentsWithSkill = getAgentsWithSkill(skill.id)}
-                  {#if agentsWithSkill.length > 0}
+                  {#if getAgentsWithSkill(skill.id).length > 0}
+                    {@const agentsWithSkill = getAgentsWithSkill(skill.id)}
                     <span class="text-sm text-gray-500 dark:text-gray-400">
                       👥 {agentsWithSkill.length} agent{agentsWithSkill.length > 1 ? 's' : ''}
                     </span>
