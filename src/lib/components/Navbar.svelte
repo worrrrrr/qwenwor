@@ -112,6 +112,18 @@
         <a href="/works" class="border-transparent text-gray-600 hover:bg-gray-50/80 hover:border-gray-300 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
           ผลงาน
         </a>
+        <a href="/blogs" class="border-transparent text-gray-600 hover:bg-gray-50/80 hover:border-gray-300 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
+          📝 Blogs
+        </a>
+        <a href="/prompts" class="border-transparent text-gray-600 hover:bg-gray-50/80 hover:border-gray-300 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
+          ⚡ Prompts
+        </a>
+        <a href="/skills" class="border-transparent text-gray-600 hover:bg-gray-50/80 hover:border-gray-300 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
+          🎯 Skills
+        </a>
+        <a href="/brains" class="border-transparent text-gray-600 hover:bg-gray-50/80 hover:border-gray-300 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">
+          🧠 Brains
+        </a>
       </div>
     </div>
   {/if}

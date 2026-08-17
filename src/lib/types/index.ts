@@ -133,3 +133,93 @@ export interface AgentWork {
   tags: string[];
   createdAt: Date;
 }
+
+// ==================== Blogs (บทความ) ======================
+
+export interface Blog {
+  id: string;
+  userId?: string | null;
+  agentId?: string | null;
+  agentName?: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  coverImage?: string | null;
+  tags: string[];
+  status: 'draft' | 'published' | 'archived';
+  publishedAt?: Date | null;
+  views: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ==================== Prompts (คลัง Prompt) ================
+
+export interface Prompt {
+  id: string;
+  userId?: string | null;
+  name: string;
+  description: string;
+  template: string;
+  variables: string[];
+  category: string;
+  tags: string[];
+  isPublic: boolean;
+  usageCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ==================== Skills (ทักษะ) =======================
+
+export interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  icon: string;
+  level: 'basic' | 'intermediate' | 'advanced' | 'expert';
+  metadata: Record<string, any>;
+  createdAt: Date;
+}
+
+export interface AgentSkill {
+  id: string;
+  agentId: string;
+  skillId: string;
+  proficiency: number; // 0-100
+  acquiredAt: Date;
+  skill?: Skill;
+}
+
+// ==================== Brains (สมองความรู้) ================
+
+export interface Brain {
+  id: string;
+  userId?: string | null;
+  name: string;
+  description: string;
+  type: 'general' | 'domain' | 'project' | 'personal';
+  color: string;
+  icon: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface BrainKnowledge {
+  id: string;
+  brainId: string;
+  knowledgeId: string;
+  addedAt: Date;
+}
+
+export interface AgentBrain {
+  id: string;
+  agentId: string;
+  brainId: string;
+  accessLevel: 'read' | 'write' | 'admin';
+  connectedAt: Date;
+  brain?: Brain;
+}

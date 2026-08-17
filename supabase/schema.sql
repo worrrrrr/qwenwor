@@ -125,6 +125,99 @@ create table if not exists public.agent_works (
   created_at  timestamptz not null default now()
 );
 
+-- 10) Blogs (บทความจาก Agent) ---------------------------------
+create table if not exists public.blogs (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users(id) on delete cascade,
+  agent_id    text references public.agents(id) on delete cascade,
+  title       text not null,
+  slug        text not null unique,
+  content     text not null,
+  excerpt     text not null default '',
+  cover_image text not null default '',
+  tags        text[] not null default '{}',
+  status      text not null default 'draft'
+              check (status in ('draft', 'published', 'archived')),
+  published_at timestamptz,
+  views       int not null default 0,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+-- 11) Prompts (คลัง Prompt Template) --------------------------
+create table if not exists public.prompts (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users(id) on delete cascade,
+  name        text not null,
+  description text not null default '',
+  template    text not null,
+  variables   jsonb not null default '[]'::jsonb,
+  category    text not null default 'general',
+  tags        text[] not null default '{}',
+  is_public   boolean not null default false,
+  usage_count int not null default 0,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+-- 12) Skills (ทักษะของ Agent) ---------------------------------
+create table if not exists public.skills (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null unique,
+  description text not null default '',
+  category    text not null default 'general',
+  icon        text not null default 'sparkles',
+  level       text not null default 'basic'
+              check (level in ('basic', 'intermediate', 'advanced', 'expert')),
+  metadata    jsonb not null default '{}'::jsonb,
+  created_at  timestamptz not null default now()
+);
+
+-- ตารางเชื่อม Agent กับ Skills (Many-to-Many)
+create table if not exists public.agent_skills (
+  id          uuid primary key default gen_random_uuid(),
+  agent_id    text not null references public.agents(id) on delete cascade,
+  skill_id    uuid not null references public.skills(id) on delete cascade,
+  proficiency int not null default 50 check (proficiency between 0 and 100),
+  acquired_at timestamptz not null default now(),
+  unique (agent_id, skill_id)
+);
+
+-- 13) Brains (สมองความรู้กลาง) --------------------------------
+create table if not exists public.brains (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users(id) on delete cascade,
+  name        text not null,
+  description text not null default '',
+  type        text not null default 'general'
+              check (type in ('general', 'domain', 'project', 'personal')),
+  color       text not null default 'blue',
+  icon        text not null default 'brain',
+  is_active   boolean not null default true,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+-- ตารางเชื่อม Brains กับ Knowledge (Many-to-Many)
+create table if not exists public.brain_knowledge (
+  id          uuid primary key default gen_random_uuid(),
+  brain_id    uuid not null references public.brains(id) on delete cascade,
+  knowledge_id uuid not null references public.knowledge(id) on delete cascade,
+  added_at    timestamptz not null default now(),
+  unique (brain_id, knowledge_id)
+);
+
+-- ตารางเชื่อม Agents กับ Brains (Many-to-Many)
+create table if not exists public.agent_brains (
+  id          uuid primary key default gen_random_uuid(),
+  agent_id    text not null references public.agents(id) on delete cascade,
+  brain_id    uuid not null references public.brains(id) on delete cascade,
+  access_level text not null default 'read'
+               check (access_level in ('read', 'write', 'admin')),
+  connected_at timestamptz not null default now(),
+  unique (agent_id, brain_id)
+);
+
 -- เพิ่มคอลัมน์ให้ agents (เลือก AI provider + สีอวาตาร์)
 alter table public.agents
   add column if not exists provider     text not null default 'groq',
@@ -138,7 +231,28 @@ alter table public.agent_chats   enable row level security;
 alter table public.chat_messages enable row level security;
 alter table public.agent_works   enable row level security;
 
+-- ============================================================
+-- Row Level Security (ต่อ)
+-- ============================================================
+alter table public.blogs           enable row level security;
+alter table public.prompts         enable row level security;
+alter table public.skills          enable row level security;
+alter table public.agent_skills    enable row level security;
+alter table public.brains          enable row level security;
+alter table public.brain_knowledge enable row level security;
+alter table public.agent_brains    enable row level security;
+
 -- Index ช่วยให้ค้นหาเร็วขึ้น
 create index if not exists idx_chats_user     on public.agent_chats (user_id);
 create index if not exists idx_messages_chat  on public.chat_messages (chat_id);
 create index if not exists idx_works_user     on public.agent_works (user_id);
+create index if not exists idx_blogs_user     on public.blogs (user_id);
+create index if not exists idx_blogs_slug     on public.blogs (slug);
+create index if not exists idx_blogs_status   on public.blogs (status);
+create index if not exists idx_prompts_user   on public.prompts (user_id);
+create index if not exists idx_prompts_cat    on public.prompts (category);
+create index if not exists idx_skills_cat     on public.skills (category);
+create index if not exists idx_agent_skills   on public.agent_skills (agent_id);
+create index if not exists idx_brains_user    on public.brains (user_id);
+create index if not exists idx_brain_knowledge on public.brain_knowledge (brain_id);
+create index if not exists idx_agent_brains   on public.agent_brains (agent_id);
