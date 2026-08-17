@@ -58,7 +58,11 @@
     { href: '/knowledge', label: 'Knowledge', icon: 'knowledge' },
     { href: '/workflows', label: 'Workflows', icon: 'workflows' },
     { href: '/tasks', label: 'Tasks', icon: 'tasks' },
-    { href: '/works', label: 'ผลงาน', icon: 'chart' }
+    { href: '/works', label: 'ผลงาน', icon: 'chart' },
+    { href: '/blogs', label: 'Blogs', icon: 'knowledge' },
+    { href: '/prompts', label: 'Prompts', icon: 'sparkles' },
+    { href: '/skills', label: 'Skills', icon: 'dashboard' },
+    { href: '/brains', label: 'Brains', icon: 'knowledge' }
   ];
 
   function isActive(href: string): boolean {
