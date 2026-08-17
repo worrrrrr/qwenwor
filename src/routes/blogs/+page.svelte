@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import type { Blog } from '$lib/types';
 
@@ -7,9 +6,10 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
   let filter = $state<'all' | 'draft' | 'published' | 'archived'>('all');
-
-  onMount(async () => {
-    await loadBlogs();
+  
+  // ใช้ $effect แทน onMount ใน Svelte 5
+  $effect(() => {
+    loadBlogs();
   });
 
   async function loadBlogs() {

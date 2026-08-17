@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import Icons from '$lib/components/Icons.svelte';
   import logo from '$lib/assets/logo.svg?url';
   import type { User } from '@supabase/supabase-js';
@@ -17,7 +16,8 @@
 
   const initials = $derived((user?.email?.charAt(0) ?? 'A').toUpperCase());
 
-  onMount(() => {
+  // ใช้ $effect แทน onMount สำหรับ timer ใน Svelte 5
+  $effect(() => {
     const timer = setInterval(() => {
       currentTime = new Date();
     }, 1000);

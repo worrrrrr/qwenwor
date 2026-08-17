@@ -7,24 +7,26 @@
   import type { User } from '@supabase/supabase-js';
   import type { Snippet } from 'svelte';
 
-  interface Props {
-    data: {
-      user: User | null;
-      counts: {
-        agents: number;
-        knowledge: number;
-        workflows: number;
-        tasks: number;
-      };
-      recentChats: {
-        id: string;
-        title: string;
-        isGroup: boolean;
-        agentId: string | null;
-        agentName: string | null;
-        updatedAt: string;
-      }[];
+  interface LayoutData {
+    user: User | null;
+    counts: {
+      agents: number;
+      knowledge: number;
+      workflows: number;
+      tasks: number;
     };
+    recentChats: {
+      id: string;
+      title: string;
+      isGroup: boolean;
+      agentId: string | null;
+      agentName: string | null;
+      updatedAt: string;
+    }[];
+  }
+
+  interface Props {
+    data: LayoutData;
     children: Snippet;
   }
 
