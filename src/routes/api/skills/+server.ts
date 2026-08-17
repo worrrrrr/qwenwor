@@ -1,12 +1,10 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { createClient } from '$lib/server/supabase';
+import { supabaseAdmin } from '$lib/server/supabase';
 
 // GET /api/skills - ดึงรายการ skills ทั้งหมด
-export const GET: RequestHandler = async ({ locals }) => {
-  const supabase = await createClient(locals);
-  
-  const { data, error } = await supabase
+export const GET: RequestHandler = async () => {
+  const { data, error } = await supabaseAdmin
     .from('skills')
     .select('*')
     .order('category')
@@ -20,11 +18,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 };
 
 // POST /api/skills - สร้าง skill ใหม่
-export const POST: RequestHandler = async ({ request, locals }) => {
-  const supabase = await createClient(locals);
+export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json();
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('skills')
     .insert({
       name: body.name,

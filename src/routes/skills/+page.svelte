@@ -169,9 +169,8 @@
                   </span>
                   
                   {#if getAgentsWithSkill(skill.id).length > 0}
-                    {@const agentsWithSkill = getAgentsWithSkill(skill.id)}
                     <span class="text-sm text-gray-500 dark:text-gray-400">
-                      👥 {agentsWithSkill.length} agent{agentsWithSkill.length > 1 ? 's' : ''}
+                      👥 {getAgentsWithSkill(skill.id).length} agent{getAgentsWithSkill(skill.id).length > 1 ? 's' : ''}
                     </span>
                   {/if}
                 </div>
@@ -219,8 +218,7 @@
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {@const agentsWithSkill = getAgentsWithSkill(skill.id)}
-                    {agentsWithSkill.length > 0 ? `${agentsWithSkill.length} agent${agentsWithSkill.length > 1 ? 's' : ''}` : '-'}
+                    {getAgentsWithSkill(skill.id).length > 0 ? `${getAgentsWithSkill(skill.id).length} agent${getAgentsWithSkill(skill.id).length > 1 ? 's' : ''}` : '-'}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <a href="/skills/{skill.id}" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">

@@ -1,1 +1,33 @@
-Nothing to output - the modified file 'src/routes/skills/+page.svelte' is a source code file and no build artifacts, dependencies, or temporary files were detected in the changes.
+```
+# SvelteKit build output
+.svelte-kit/
+
+# Environment variables
+.env
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python cache (if present)
+__pycache__/
+*.pyc
+
+# System files
+.DS_Store
+Thumbs.db
+```
